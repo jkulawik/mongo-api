@@ -15,7 +15,10 @@ class Part(BaseModel):
     category: str = Field(min_length=1, max_length=DEFAULT_MAX_LEN)
     quantity: int = Field(ge=0)  # greater than or equal to 0
     price: float = Field(gt=0.0)  # greater than
-    location: dict
+
+    # location: dict
+    # NOTE: location is handled by the API as another model (right below), but inserted into the db
+    # after validation
 
 
 class Location(BaseModel):
@@ -27,9 +30,8 @@ class Location(BaseModel):
     cuvettes need to be moved.
 
     For now though let's pretend that every cuvette, shelf and bookcase have standardized sizes.
-    For example, 6 shelves per bookcase and 8x8 cuvettes.
-    Using indexes counted from 1 because that's probably what non-programmers
-    would do in a warehouse.
+    For example, 6 shelves per bookcase and 8x8 cuvettes. Using indexes counted from 1 because
+    that's probably what non-programmers would do in a warehouse.
     """
     room: str = Field(min_length=1, max_length=DEFAULT_MAX_LEN)
     bookcase: int = Field(ge=1)

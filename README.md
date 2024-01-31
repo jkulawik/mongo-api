@@ -2,7 +2,8 @@ uvicorn api.main:app --reload
 pytest
 
 Data validation in MongoDB was considered, but FastAPI/Pydantic was chosen due to higher flexibility.
-Pydantic's Field
+Basic validation (whether all mandatory fields are present, string length, min/max values)
+is handled by FastAPI and Pydantic's Field.
 
 Areas that could use improvement:
 - testing uses the "production" database instead of a mock
