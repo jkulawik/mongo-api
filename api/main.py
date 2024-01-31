@@ -12,7 +12,7 @@ app = FastAPI()
 
 # -------------------------- Init database -------------------------- #
 
-with open('connect_info.txt', 'r') as file:
+with open('connect_info.txt', 'r', encoding="utf-8") as file:
     connection_string = file.readline()
     db_name = file.readline()
 

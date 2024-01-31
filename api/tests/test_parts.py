@@ -6,4 +6,3 @@ client = TestClient(app)
 
 def test_category_add():
     pass
-
