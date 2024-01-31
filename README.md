@@ -1,4 +1,4 @@
-uvicorn main:app --reload
+uvicorn api.main:app --reload
 pytest
 
 Data validation in MongoDB was considered, but FastAPI/Pydantic was chosen due to higher flexibility.

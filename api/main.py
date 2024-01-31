@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException
 from pymongo import MongoClient
-from data.models import Part, Category, Location
-from data import validation
+from .data.models import Part, Category, Location
+from .data import validation
 
 tags_metadata = [
     {"name": "parts"},

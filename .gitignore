@@ -1,8 +1,6 @@
 /connect_info.txt
 
-/__pycache__/
-/data/__pycache__/
-/tests/__pycache__/
+*__pycache__*
 
 /.idea/
 /.vscode/
