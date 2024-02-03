@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Response, status, HTTPException
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 from .data.models import Part, Category, Location
 from .data import validation
 
@@ -81,15 +81,9 @@ async def delete_part(serial_number: str = ""):
 
 @app.post("/categories", tags=["categories"])
 async def create_category(category: Category):
-    if category.parent_name == category.name:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "category parent name can't be same as category name")
+    validation.validate_category(db, category)
     if not validation.is_value_unique(db.categories, {"name": category.name}):
         raise HTTPException(status.HTTP_409_CONFLICT, f"category {category.name} already exists")
-
-    result = db.categories.find_one({"name": category.parent_name})
-    if result is None and category.parent_name != "":
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"parent category with name {category.parent_name} does not exist")
-
     doc = {
         "name": category.name,
         "parent_name": category.parent_name,
@@ -114,14 +108,32 @@ async def read_category(name: str = ""):
     result = db.categories.find_one({"name": name})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
-    # TODO remove _id instead
-    return {"name": result["name"], "parent_name": result["parent_name"]}
+    del result["_id"]
+    return result
 
 
 @app.put("/categories/{name}", tags=["categories"])
-async def update_category(name: str = ""):
-    # TODO Don't update category name if there are parts assigned to it or when child categories reference it
-    return {"message": "categories"}
+async def update_category(name: str, new_category: Category):
+    # Test if category exists, like in read_category
+    category = db.categories.find_one({"name": name})
+    if category is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
+
+    if new_category.name != name:
+        validation.validate_category(db, new_category)
+        validation.validate_category_editable(db, name)
+    # Parent can be updated even when parts and child categories exist
+    part = db.parts.find_one({"category": name})
+    if new_category.parent_name == "":
+        if part is not None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"can't make category {name} a base category: has parts assigned")
+
+    result = db.categories.find_one_and_update(
+        {"name": name},
+        {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
+        return_document=ReturnDocument.AFTER)
+    del result["_id"]
+    return result
 
 
 @app.delete("/categories/{name}", tags=["categories"])

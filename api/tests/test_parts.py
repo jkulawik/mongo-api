@@ -39,7 +39,7 @@ def test_part_add_correct():
         "parent_name": "category_123"
         })
     assert response.status_code == 200
-    # Test trying to add to a valid category
+    # Test trying to add to a valid part
     test_part = test_part_template.copy()
     test_part["category"] = "category_456"
     response = client.post("/parts", json={

@@ -1,10 +1,28 @@
 from fastapi.testclient import TestClient
 from fastapi import status
+import pytest
 from ..main import app
 from .example_data import test_location_template, test_part_template
-
-
 client = TestClient(app)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def init_data_for_delete_and_update():
+    # Add base category and subcategories
+    response = client.post("/categories", json={"name": "edit_cat1", "parent_name": ""})
+    assert response.status_code == 200
+    response = client.post("/categories", json={"name": "edit_cat2", "parent_name": "edit_cat1"})
+    assert response.status_code == 200
+    response = client.post("/categories", json={"name": "edit_cat3", "parent_name": "edit_cat1"})
+    assert response.status_code == 200
+    
+
+    # Add a valid part for edit_cat2
+    test_part = test_part_template.copy()
+    test_part["category"] = "edit_cat2"
+    response = client.post("/parts", json={"part": test_part, "location": test_location_template})
+    assert response.status_code == 200
+
 
 # -------------------------- Add / POST -------------------------- #
 
@@ -99,29 +117,43 @@ def test_category_read_many():
 # -------------------------- Update / PUT -------------------------- #
 # TODO test category update
 
+
+def test_category_update_nonexistent():
+    new_category_data = {"name": "new_name", "parent_name": "edit_cat1"}
+    response = client.put("/categories/doesntexist", json=new_category_data)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "category with name doesntexist does not exist"}
+
+
 def test_category_rename_with_parts_assigned():
-    # TODO create a set of available data on test start
-
     new_category_data = {"name": "new_name", "parent_name": ""}
-    response = client.put("/categories/edit_me", json=new_category_data)
-    assert response.json() == new_category_data
-    assert response.status_code == 200
+    response = client.put("/categories/edit_cat2", json=new_category_data)
+    assert response.json() == {"detail": "can't update/remove category edit_cat2: has parts assigned"}
+    assert response.status_code == 400
 
 
-def test_category_change_parent_to_self():
-    assert False
+def test_category_rename_with_child_categories_assigned():
+    new_category_data = {"name": "new_name", "parent_name": ""}
+    response = client.put("/categories/edit_cat1", json=new_category_data)
+    assert response.json() == {"detail": "can't update/remove category edit_cat1: referenced by child categories"}
+    assert response.status_code == 400
 
 
-def test_category_change_parent_to_nonexistent():
-    assert False
+def test_category_make_base_with_parts_assigned():
+    new_category_data = {"name": "edit_cat2", "parent_name": ""}
+    response = client.put("/categories/edit_cat2", json=new_category_data)
+    assert response.json() == {"detail": "can't make category edit_cat2 a base category: has parts assigned"}
 
 
 def test_category_update():
-    assert False
+    new_category_data = {"name": "new_name", "parent_name": "edit_cat1"}
+    response = client.put("/categories/edit_cat3", json=new_category_data)
+    assert response.json() == new_category_data
+    assert response.status_code == 200
 
 
 # -------------------------- Delete -------------------------- #
 # TODO test category delete
 
 def test_category_delete():
-    pass
+    assert False
