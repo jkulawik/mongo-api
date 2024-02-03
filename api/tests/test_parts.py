@@ -58,12 +58,14 @@ def test_part_add_correct():
 # -------------------------- Read / GET -------------------------- #
 
 def test_part_read_nonexistent():
+    # TODO
     response = client.get("/parts/doesntexist")
     assert response.status_code == 404
     assert response.json() == {"detail": "part with serial number doesntexist does not exist"}
 
 
 def test_part_read():
+    # TODO
     assert False
 
 
@@ -71,14 +73,17 @@ def test_part_read():
 
 
 def test_part_update_with_nonexistent_category():
+    # TODO
     assert False
 
 
 def test_part_update_with_base_category():
+    # TODO
     assert False
 
 
 def test_part_update_correct():
+    # TODO
     assert False
 
 
@@ -86,8 +91,10 @@ def test_part_update_correct():
 
 
 def test_part_delete_nonexistent():
+    # TODO
     assert False
 
 
 def test_part_delete():
+    # TODO
     assert False

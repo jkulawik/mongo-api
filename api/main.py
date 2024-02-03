@@ -73,7 +73,6 @@ async def read_parts(q: Annotated[str | None, Query(max_length=50)] = None):
         cursor = db.parts.find({})
         return get_dicts_from_cursor(cursor)
     # TODO Search for parts based on all mandatory ﬁelds
-    # TODO return all if empty
 
     cursor = db.parts.find({})
     return get_dicts_from_cursor(cursor)

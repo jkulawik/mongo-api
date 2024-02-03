@@ -128,21 +128,27 @@ def test_category_update_nonexistent():
 def test_category_rename_with_parts_assigned():
     new_category_data = {"name": "new_name", "parent_name": ""}
     response = client.put("/categories/edit_cat2", json=new_category_data)
-    assert response.json() == {"detail": "can't update/remove category edit_cat2: has parts assigned"}
+    assert response.json() == {
+        "detail": "can't update/remove category edit_cat2: has parts assigned"
+    }
     assert response.status_code == 400
 
 
 def test_category_rename_with_child_categories_assigned():
     new_category_data = {"name": "new_name", "parent_name": ""}
     response = client.put("/categories/edit_cat1", json=new_category_data)
-    assert response.json() == {"detail": "can't update/remove category edit_cat1: child categories have parts assigned"}
+    assert response.json() == {
+        "detail": "can't update/remove category edit_cat1: child categories have parts assigned"
+    }
     assert response.status_code == 400
 
 
 def test_category_make_base_with_parts_assigned():
     new_category_data = {"name": "edit_cat2", "parent_name": ""}
     response = client.put("/categories/edit_cat2", json=new_category_data)
-    assert response.json() == {"detail": "can't make category edit_cat2 a base category: has parts assigned"}
+    assert response.json() == {
+        "detail": "can't make category edit_cat2 a base category: has parts assigned"
+    }
 
 
 def test_category_update():
@@ -167,13 +173,17 @@ def test_category_delete_nonexistent():
 
 def test_category_delete_with_parts_assigned():
     response = client.delete("/categories/edit_cat2")
-    assert response.json() == {"detail": "can't update/remove category edit_cat2: has parts assigned"}
+    assert response.json() == {
+        "detail": "can't update/remove category edit_cat2: has parts assigned"
+    }
     assert response.status_code == 400
 
 
 def test_category_delete_with_child_categories_assigned():
     response = client.delete("/categories/edit_cat1")
-    assert response.json() == {"detail": "can't update/remove category edit_cat1: child categories have parts assigned"}
+    assert response.json() == {
+        "detail": "can't update/remove category edit_cat1: child categories have parts assigned"
+    }
     assert response.status_code == 400
 
 
