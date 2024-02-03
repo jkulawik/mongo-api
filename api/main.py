@@ -101,14 +101,11 @@ async def create_category(category: Category):
 
 @app.get("/categories", tags=["categories"])
 async def read_categories():
-    raw_results = db.categories.find({})
+    cursor = db.categories.find({})
     result = []
-    # TODO remove _id instead
-    for document in raw_results:
-        result.append({
-            "name": document["name"],
-            "parent_name": document["parent_name"]
-        })
+    for document in cursor:
+        del document["_id"]
+        result.append(document)
     return result
 
 
