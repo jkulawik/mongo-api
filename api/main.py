@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Response, status, HTTPException
-from pymongo import MongoClient, ReturnDocument
+from typing import Annotated
+from fastapi import FastAPI, status, HTTPException, Query
+from pymongo import MongoClient, ReturnDocument, CursorType
 from .data.models import Part, Category, Location
 from .data import validation
 
@@ -30,12 +31,18 @@ else:
     db.create_collection("categories")
 
 
-# -------------------------- Search -------------------------- #
-# TODO Search for parts based on all mandatory ﬁelds
+# -------------------------- Utilities -------------------------- #
+
+
+def get_dicts_from_cursor(cursor: CursorType):
+    result = []
+    for document in cursor:
+        del document["_id"]
+        result.append(document)
+    return result
 
 
 # -------------------------- Parts -------------------------- #
-
 
 
 @app.post("/parts", tags=["parts"])
@@ -44,30 +51,37 @@ async def create_part(part: Part, location: Location):
     doc = vars(part)
     doc["location"] = vars(location)
     db.parts.insert_one(doc)
-    # NOTE pymongo inserts "_id": ObjectID() into the dict. It crashes FastAPI and pytest because
-    # it's not serialisable, and since it's not needed by the end user we just remove it
     del doc["_id"]
     return doc
 
 
 @app.get("/parts/{serial_number}", tags=["parts"])
-async def read_part(serial_number: str = ""):
+async def read_part(serial_number: str):
     result = db.parts.find_one({"serial_number": serial_number})
     if result is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"part with serial_number {serial_number} does not exist")
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"part with serial_number {serial_number} does not exist"
+        )
     del result["_id"]
     return result
 
 
 @app.get("/parts", tags=["parts"])
-async def read_parts():
-    return []
+async def read_parts(q: Annotated[str | None, Query(max_length=50)] = None):
+    if q is None:
+        cursor = db.parts.find({})
+        return get_dicts_from_cursor(cursor)
+    # TODO Search for parts based on all mandatory ﬁelds
+    # TODO return all if empty
+
+    cursor = db.parts.find({})
+    return get_dicts_from_cursor(cursor)
 
 
 @app.put("/parts/{serial_number}", tags=["parts"])
-async def update_part(serial_number: str = ""):
-    # TODO Ensure that each part belongs to a category
-    # TODO Ensure that a part cannot be assigned to a base category.
+async def update_part(serial_number: str, new_part_data: Part, new_location: Location):
+    validation.validate_part(db, new_part_data.category)
     return {"detail": "parts"}
 
 
@@ -96,11 +110,7 @@ async def create_category(category: Category):
 @app.get("/categories", tags=["categories"])
 async def read_categories():
     cursor = db.categories.find({})
-    result = []
-    for document in cursor:
-        del document["_id"]
-        result.append(document)
-    return result
+    return get_dicts_from_cursor(cursor)
 
 
 @app.get("/categories/{name}", tags=["categories"])
@@ -121,8 +131,10 @@ async def update_category(name: str, new_category: Category):
     part = db.parts.find_one({"category": name})
     if new_category.parent_name == "":
         if part is not None:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"can't make category {name} a base category: has parts assigned")
-
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"can't make category {name} a base category: has parts assigned"
+            )
     result = db.categories.find_one_and_update(
         {"name": name},
         {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
