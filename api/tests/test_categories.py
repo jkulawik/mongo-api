@@ -91,8 +91,8 @@ def test_category_read_many():
     # Test the all categories endpoint
     response = client.get("/categories")
     # NOTE categories from previous tests are still present so no direct comparison here
-    assert {"name": "test_category", "parent_name": ""} in response.json()
     assert {"name": "test_category2", "parent_name": ""} in response.json()
+    assert {"name": "test_category3", "parent_name": ""} in response.json()
     assert response.status_code == 200
 
 
