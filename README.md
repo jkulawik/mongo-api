@@ -1,28 +1,81 @@
-uvicorn api.main:app --reload
-pytest
 
+# Usage
 
-Areas that could use improvement:
-- testing uses the "production" database instead of a mock
-- testing probably shouldn't be stateful: the database is emptied on each app start, but data persists between tests
-- locations could be a MongoDB collection with their own validation, but this was out of project scope
+Install requirements with:
+```pip install -r requirements.txt```
+
+The app requires a `connect_info.txt` file in the run directory.
+First line should contain a MongoDB connection string, and the 2nd one - a database name.
+This approach means that secrets aren't stored on the repo
+and removes the need of entering this data during each app launch.
+
+Testing: run `pytest` in the project folder.
+
+Run the app with:
+```uvicorn api.main:app --reload```
+
+In the console output, note the API URL (default: `http://127.0.0.1:8000`).
+Swagger docs of the API are available at `http://127.0.0.1:8000/docs`. All endpoints and methods are listed there, but a simplified API documentation is available in this markdown file.
+
+NOTE: The configured database is emptied on each app launch!
+
+# Project specification
+
+- Create an API with CRUD functionality for two MongoDB collections: Parts and Categories.
+- Validate input using object models. A list of mandatory fields was supplied.
+- Parts collection:
+  - Ensure that each part belongs to a category and that a part cannot be in a base category.
+  - Create an additional endpoint
+- Categories collection:
+  - Ensure that a category cannot be removed if there are parts assigned to it.
+  - Ensure that a parent category cannot be removed if it has child categories with parts assigned.
+- Returns results in JSON format so that they can be consumed with Postman.
+- Dockerize the app.
 
 
 # Design
 
+The FastAPI framework was chosen over Flask due to bigger familiarity and a more complete feature set.
+
 ## Data validation
 
-MongoDB data validation was considered, but FastAPI/Pydantic was chosen due to higher flexibility.
-Basic validation (whether all mandatory fields are present, string length, min/max values)
-is handled by FastAPI and Pydantic's Field.
+Basic validation (whether all mandatory fields are present, string length, min/max values) is handled by FastAPI and Pydantic.
 As such, some of the basic validation isn't checked explicitly.
 For example, making sure that all parts belong to a category:
 the app always requires the user to supply one that's not empty.
 
+## Locations
+
+To simplify work with part location, location was given its own object model and is POSTed as a separate JSON in the request body.
+After validation, this data is appended to Part data as a dictionary to comply with the specified database schema.
+
+Since no requirements were listed about the location data, an idealised warehouse model was assumed: every cuvette, shelf and bookcase have the same sizes (6 shelves per bookcase and 8x8 cuvettes). Indexes in these are counted from 1 because
+that's probably what non-programmers would do in a warehouse.
+Room names are arbitrary and bookcase counts don't have an upper limit.
+
 ## Document IDs
-In several places, `del document["_id"]` is used.
+
+In several places, `del document["_id"]` is used because
 PyMongo uses ObjectID instances instead of raw IDs.
 These objects crash FastAPI and pytest because they're not serialisable,
-and since database IDs are not needed by the end user they are just removed.
-Worth noting is that pymongo not only returns dictionaries with ObjectIDs,
-but also inserts them into the dictionaries which are used in pymongo function arguments.
+and since database IDs are not needed by the end user they can be simply removed from the output.
+
+Worth noting is that PyMongo not only returns dictionaries with ObjectIDs,
+but also inserts these into the dictionaries which are passed to the module's functions.
+
+## Shortcomings
+
+Areas that could use improvement:
+- testing uses the "production" database instead of a fixture
+- testing probably shouldn't be stateful: the database is emptied on each app start, but data persists between tests
+
+## Proposals
+
+While this is out of scope and would complicate the project, making Locations their own Mongo collection would likely simplify warehouse operations.
+
+A naive approach would be to label each cuvette with a unique name and then reference cuvettes in Parts objects.
+This would make moving cuvettes much easier and would decouple location maintenance from the Parts collection.
+
+# API documentation
+
+TODO
