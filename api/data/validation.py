@@ -17,10 +17,17 @@ def validate_category(db: database, category: Category):
 
 
 def validate_category_editable(db: database, name: str):
-    child_category = db.categories.find_one({"parent_name": name})
+    # Ensure that a category cannot be edited/removed if there are parts assigned to it.
     part = db.parts.find_one({"category": name})
     if part is not None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"can't update/remove category {name}: has parts assigned")
-    if child_category is not None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"can't update/remove category {name}: referenced by child categories")
+    # Ensure that a parent category can't  be removed if it has child categories with parts assigned.
+    cursor = db.categories.find({"parent_name": name})
+    for document in cursor:
+        child_category_name = document["name"]
+        child_part = db.parts.find_one({"category": child_category_name})
+        if child_part is not None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"can't update/remove category {name}: child categories have parts assigned")
 
+
+# -------------------------- Parts -------------------------- #

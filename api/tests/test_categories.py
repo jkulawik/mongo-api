@@ -15,7 +15,8 @@ def init_data_for_delete_and_update():
     assert response.status_code == 200
     response = client.post("/categories", json={"name": "edit_cat3", "parent_name": "edit_cat1"})
     assert response.status_code == 200
-    
+    response = client.post("/categories", json={"name": "deleteme", "parent_name": "edit_cat1"})
+    assert response.status_code == 200
 
     # Add a valid part for edit_cat2
     test_part = test_part_template.copy()
@@ -115,7 +116,6 @@ def test_category_read_many():
 
 
 # -------------------------- Update / PUT -------------------------- #
-# TODO test category update
 
 
 def test_category_update_nonexistent():
@@ -135,7 +135,7 @@ def test_category_rename_with_parts_assigned():
 def test_category_rename_with_child_categories_assigned():
     new_category_data = {"name": "new_name", "parent_name": ""}
     response = client.put("/categories/edit_cat1", json=new_category_data)
-    assert response.json() == {"detail": "can't update/remove category edit_cat1: referenced by child categories"}
+    assert response.json() == {"detail": "can't update/remove category edit_cat1: child categories have parts assigned"}
     assert response.status_code == 400
 
 
@@ -150,10 +150,38 @@ def test_category_update():
     response = client.put("/categories/edit_cat3", json=new_category_data)
     assert response.json() == new_category_data
     assert response.status_code == 200
+    # Test if the entry is correctly updated in the db
+    response = client.get("/categories/new_name")
+    assert response.json() == {"name": "new_name", "parent_name": "edit_cat1"}
+    assert response.status_code == 200
 
 
 # -------------------------- Delete -------------------------- #
-# TODO test category delete
+
+
+def test_category_delete_nonexistent():
+    response = client.delete("/categories/doesntexist")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "category with name doesntexist does not exist"}
+
+
+def test_category_delete_with_parts_assigned():
+    response = client.delete("/categories/edit_cat2")
+    assert response.json() == {"detail": "can't update/remove category edit_cat2: has parts assigned"}
+    assert response.status_code == 400
+
+
+def test_category_delete_with_child_categories_assigned():
+    response = client.delete("/categories/edit_cat1")
+    assert response.json() == {"detail": "can't update/remove category edit_cat1: child categories have parts assigned"}
+    assert response.status_code == 400
+
 
 def test_category_delete():
-    assert False
+    response = client.delete("/categories/deleteme")
+    assert response.json() == {}
+    assert response.status_code == 200
+    # Test if the entry is correctly removed from the db
+    response = client.get("/categories/deleteme")
+    assert response.status_code == 404
+    # assert response.json() == {"name": "new_name", "parent_name": "edit_cat1"}

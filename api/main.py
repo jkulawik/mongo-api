@@ -114,11 +114,6 @@ async def read_category(name: str = ""):
 
 @app.put("/categories/{name}", tags=["categories"])
 async def update_category(name: str, new_category: Category):
-    # Test if category exists, like in read_category
-    category = db.categories.find_one({"name": name})
-    if category is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
-
     if new_category.name != name:
         validation.validate_category(db, new_category)
         validation.validate_category_editable(db, name)
@@ -132,12 +127,17 @@ async def update_category(name: str, new_category: Category):
         {"name": name},
         {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
         return_document=ReturnDocument.AFTER)
+    if result is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
     del result["_id"]
     return result
 
 
 @app.delete("/categories/{name}", tags=["categories"])
 async def delete_category(name: str = ""):
-    # TODO Ensure that a category cannot be removed if there are parts assigned to it.
-    # TODO Ensure that a parent category cannot be removed if it has child categories with parts assigned.
-    return {"message": "categories"}
+    validation.validate_category_editable(db, name)
+
+    result = db.categories.find_one_and_delete({"name": name})
+    if result is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
+    return {}
