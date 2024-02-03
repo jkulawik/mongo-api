@@ -46,7 +46,7 @@ def get_dicts_from_cursor(cursor: CursorType):
 
 
 @app.post("/parts", tags=["parts"])
-async def create_part(part: Part, location: Location):
+def create_part(part: Part, location: Location):
     validation.validate_part(db, part.category)
     doc = vars(part)
     doc["location"] = vars(location)
@@ -56,7 +56,7 @@ async def create_part(part: Part, location: Location):
 
 
 @app.get("/parts/{serial_number}", tags=["parts"])
-async def read_part(serial_number: str):
+def read_part(serial_number: str):
     result = db.parts.find_one({"serial_number": serial_number})
     if result is None:
         raise HTTPException(
@@ -68,7 +68,7 @@ async def read_part(serial_number: str):
 
 
 @app.get("/parts", tags=["parts"])
-async def read_parts(q: Annotated[str | None, Query(max_length=50)] = None):
+def read_parts(q: Annotated[str | None, Query(max_length=50)] = None):
     if q is None:
         cursor = db.parts.find({})
         return get_dicts_from_cursor(cursor)
@@ -79,13 +79,13 @@ async def read_parts(q: Annotated[str | None, Query(max_length=50)] = None):
 
 
 @app.put("/parts/{serial_number}", tags=["parts"])
-async def update_part(serial_number: str, new_part_data: Part, new_location: Location):
+def update_part(serial_number: str, new_part_data: Part, new_location: Location):
     validation.validate_part(db, new_part_data.category)
     return {"detail": "parts"}
 
 
 @app.delete("/parts/{serial_number}", tags=["parts"])
-async def delete_part(serial_number: str = ""):
+def delete_part(serial_number: str = ""):
     return {"detail": "parts"}
 
 
@@ -93,7 +93,7 @@ async def delete_part(serial_number: str = ""):
 
 
 @app.post("/categories", tags=["categories"])
-async def create_category(category: Category):
+def create_category(category: Category):
     validation.validate_category(db, category)
     if not validation.is_value_unique(db.categories, {"name": category.name}):
         raise HTTPException(status.HTTP_409_CONFLICT, f"category {category.name} already exists")
@@ -107,13 +107,13 @@ async def create_category(category: Category):
 
 
 @app.get("/categories", tags=["categories"])
-async def read_categories():
+def read_categories():
     cursor = db.categories.find({})
     return get_dicts_from_cursor(cursor)
 
 
 @app.get("/categories/{name}", tags=["categories"])
-async def read_category(name: str = ""):
+def read_category(name: str = ""):
     result = db.categories.find_one({"name": name})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
@@ -122,7 +122,7 @@ async def read_category(name: str = ""):
 
 
 @app.put("/categories/{name}", tags=["categories"])
-async def update_category(name: str, new_category: Category):
+def update_category(name: str, new_category: Category):
     if new_category.name != name:
         validation.validate_category(db, new_category)
         validation.validate_category_editable(db, name)
@@ -145,7 +145,7 @@ async def update_category(name: str, new_category: Category):
 
 
 @app.delete("/categories/{name}", tags=["categories"])
-async def delete_category(name: str = ""):
+def delete_category(name: str = ""):
     validation.validate_category_editable(db, name)
 
     result = db.categories.find_one_and_delete({"name": name})
