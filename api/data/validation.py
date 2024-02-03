@@ -31,3 +31,17 @@ def validate_category_editable(db: database, name: str):
 
 
 # -------------------------- Parts -------------------------- #
+
+
+def validate_part(db: database, category_name: str):
+    result = db.categories.find_one({"name": category_name})
+    if result is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"part category {category_name} does not exist"
+            )
+    if result["parent_name"] == "":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"part can't be assigned to a base category ({category_name})"
+            )

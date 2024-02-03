@@ -2,7 +2,7 @@ test_part_template = {
     "serial_number": "abc01",
     "name": "abc 1",
     "description": "",
-    "category": "category_abc",
+    "category": "base_parts",
     "quantity": 1,
     "price": 2.0,
     }

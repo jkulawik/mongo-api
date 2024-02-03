@@ -184,4 +184,3 @@ def test_category_delete():
     # Test if the entry is correctly removed from the db
     response = client.get("/categories/deleteme")
     assert response.status_code == 404
-    # assert response.json() == {"name": "new_name", "parent_name": "edit_cat1"}

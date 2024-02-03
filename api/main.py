@@ -35,18 +35,9 @@ else:
 
 @app.post("/parts", tags=["parts"])
 async def create_part(part: Part, location: Location):
-    result = db.categories.find_one({"name": part.category})
-    if result is None:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            f"part category {part.category} does not exist"
-            )
-    if result["parent_name"] == "":
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            f"part can't be assigned to a base category ({part.category})"
-            )
+    validation.validate_part(db, part.category)
     doc = vars(part)
+    doc["location"] = vars(location)
     db.parts.insert_one(doc)
     # NOTE pymongo inserts "_id": ObjectID() into the dict. It crashes FastAPI and pytest because
     # it's not serialisable, and since it's not needed by the end user we just remove it
