@@ -29,8 +29,13 @@ if "categories" in collections:
 else:
     db.create_collection("categories")
 
-# -------------------------- Parts -------------------------- #
+
+# -------------------------- Search -------------------------- #
 # TODO Search for parts based on all mandatory ﬁelds
+
+
+# -------------------------- Parts -------------------------- #
+
 
 
 @app.post("/parts", tags=["parts"])
@@ -47,7 +52,11 @@ async def create_part(part: Part, location: Location):
 
 @app.get("/parts/{serial_number}", tags=["parts"])
 async def read_part(serial_number: str = ""):
-    return {"detail": "parts"}
+    result = db.parts.find_one({"serial_number": serial_number})
+    if result is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"part with serial_number {serial_number} does not exist")
+    del result["_id"]
+    return result
 
 
 @app.get("/parts", tags=["parts"])
