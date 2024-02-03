@@ -15,6 +15,9 @@ def init_data_for_parts_testing():
     assert response.status_code == 200
 
 
+# -------------------------- Add / POST -------------------------- #
+
+
 def test_part_add_to_nonexistent_category():
     test_part = test_part_template.copy()
     test_part["category"] = "doesntexist"
@@ -50,3 +53,39 @@ def test_part_add_correct():
     assert response.json() == test_part
     assert response.json()["location"] == test_location_template
     assert response.status_code == 200
+
+
+# -------------------------- Read / GET -------------------------- #
+
+def test_part_read_nonexistent():
+    assert False
+
+
+def test_part_read():
+    assert False
+
+
+# -------------------------- Update / PUT -------------------------- #
+
+
+def test_part_update_with_nonexistent_category():
+    assert False
+
+
+def test_part_update_with_base_category():
+    assert False
+
+
+def test_part_update_correct():
+    assert False
+
+
+# -------------------------- Delete -------------------------- #
+
+
+def test_part_delete_nonexistent():
+    assert False
+
+
+def test_part_delete():
+    assert False
