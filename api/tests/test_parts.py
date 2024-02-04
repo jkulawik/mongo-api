@@ -3,7 +3,7 @@ import pytest
 import mongomock
 
 from ..main import app, get_db
-from .example_data import test_location_template, test_part_template
+from .example_data import fixture_part_1, fixture_part_2
 
 client = TestClient(app)
 
@@ -29,13 +29,13 @@ def init_data_for_parts_testing():
     assert response.status_code == 200
     response = client.post("/categories", json={"name": "test_parts", "parent_name": "base_parts"})
     assert response.status_code == 200
-    # Add a test part
+    # Add test parts
     response = client.post(
         "/parts",
-        json={"part": test_part_template, "location": test_location_template}
+        json={"part": fixture_part_1, "location": fixture_part_1["location"]}
     )
-    assert response.json() == test_part_template
-    assert response.json()["location"] == test_location_template
+    assert response.json() == fixture_part_1
+    assert response.json()["location"] == fixture_part_1["location"]
     assert response.status_code == 200
 
 
@@ -43,12 +43,12 @@ def init_data_for_parts_testing():
 
 
 def test_part_add_to_nonexistent_category():
-    test_part = test_part_template.copy()
+    test_part = fixture_part_1.copy()
     test_part["category"] = "doesntexist"
     # Test trying to add nonexistent category
     response = client.post(
         "/parts",
-        json={"part": test_part, "location": test_location_template}
+        json={"part": test_part, "location": fixture_part_1["location"]}
     )
     assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
@@ -56,11 +56,11 @@ def test_part_add_to_nonexistent_category():
 
 def test_part_add_to_base_category():
     # Test trying to add to base category
-    test_part = test_part_template.copy()
+    test_part = fixture_part_1.copy()
     test_part["category"] = "base_parts"
     response = client.post(
         "/parts",
-        json={"part": test_part, "location": test_location_template}
+        json={"part": test_part, "location": fixture_part_1["location"]}
     )
     assert response.json() == {"detail": "part can't be assigned to a base category (base_parts)"}
     assert response.status_code == 400
@@ -68,15 +68,12 @@ def test_part_add_to_base_category():
 
 def test_part_add_correct():
     # Test trying to add to a valid part
-    test_part = test_part_template.copy()
+    test_part = fixture_part_1.copy()
     response = client.post(
         "/parts",
-        json={"part": test_part, "location": test_location_template}
+        json={"part": test_part, "location": fixture_part_1["location"]}
     )
-    # Location is not a part of the Part model: like in the API, it has to be added to JSON manually
-    test_part["location"] = test_location_template
     assert response.json() == test_part
-    assert response.json()["location"] == test_location_template
     assert response.status_code == 200
 
 
@@ -90,8 +87,18 @@ def test_part_read_nonexistent():
 
 def test_part_read():
     response = client.get("/parts/example_serial_no")
-    assert response.json() == test_part_template
+    assert response.json() == fixture_part_1
     assert response.status_code == 200
+
+
+def test_part_read_many():
+    # TODO
+    assert False
+
+
+def test_part_search():
+    # TODO
+    assert False
 
 
 # -------------------------- Update / PUT -------------------------- #

@@ -4,7 +4,7 @@ import pytest
 import mongomock
 
 from ..main import app, get_db
-from .example_data import test_location_template, test_part_template
+from .example_data import fixture_part_1
 
 client = TestClient(app)
 
@@ -37,9 +37,9 @@ def init_data_for_delete_and_update():
     assert response.status_code == 200
 
     # Add valid parts for edit_cat2
-    test_part = test_part_template.copy()
+    test_part = fixture_part_1.copy()
     test_part["category"] = "edit_cat2"
-    response = client.post("/parts", json={"part": test_part, "location": test_location_template})
+    response = client.post("/parts", json={"part": test_part, "location": fixture_part_1["location"]})
     assert response.status_code == 200
 
 
