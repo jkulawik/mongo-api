@@ -162,8 +162,8 @@ def read_category(name: str, db: database = Depends(get_db)):
     if parent_id is None:
         result["parent_name"] = ""
     else:
-        # TODO convert to parent_name
-        pass
+        category_document = get_category_document(db, {"_id": parent_id})
+        result["parent_name"] = category_document["name"]
     del result["_id"]
     del result["parent_id"]
     return result
