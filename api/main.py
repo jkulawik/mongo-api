@@ -160,7 +160,7 @@ def update_category(name: str, new_category: Category, db: database = Depends(ge
                 f"can't make category {name} a base category: has parts assigned"
             )
     result = db.categories.find_one_and_update(
-        {"name": name},
+        {"_id": category["_id"]},
         {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
         return_document=ReturnDocument.AFTER)
     del result["_id"]
