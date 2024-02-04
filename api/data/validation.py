@@ -38,13 +38,14 @@ def validate_category_no_parts(db: database, category_document: dict):
         )
 
 
-def validate_category_children_no_parts(db: database, name: str):
+def validate_category_children_no_parts(db: database, category_document: dict):
     # Ensure that a parent category can't be removed if it has child categories with parts assigned.
-    cursor = db.categories.find({"parent_name": name})
+    cursor = db.categories.find({"parent_id": category_document["_id"]})
     for document in cursor:
         child_category_id = document["_id"]
         child_part = db.parts.find_one({"category": child_category_id})
         if child_part is not None:
+            name = category_document["name"]
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
                 f"can't update/remove category {name}: child categories have parts assigned"
@@ -53,7 +54,7 @@ def validate_category_children_no_parts(db: database, name: str):
 
 def validate_category_accepts_parts(category_document: dict):
     # Ensure that a part cannot be in a base category.
-    if category_document["parent_name"] is None:
+    if category_document["parent_id"] is None:
         name = category_document["name"]
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,

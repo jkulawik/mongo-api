@@ -51,6 +51,10 @@ def get_category_document(db: database, search_dict: dict):
     return result
 
 
+def category_doc_to_json(document: dict):
+    pass
+
+
 # -------------------------- Parts -------------------------- #
 
 
@@ -123,11 +127,12 @@ def create_category(category: Category, db: database = Depends(get_db)):
             parent_id = parent_category["_id"]
     doc = {
         "name": category.name,
-        "parent_name": parent_id,
+        "parent_id": parent_id,
     }
     db.categories.insert_one(doc)
     doc["parent_name"] = category.parent_name
     del doc["_id"]
+    del doc["parent_id"]
     return doc
 
 
@@ -136,13 +141,13 @@ def read_categories(db: database = Depends(get_db)):
     cursor = db.categories.find({})
     result = []
     for document in cursor:
-        del document["_id"]
-        print(document)
-        if document["parent_name"] is None:
+        if document["parent_id"] is None:
             document["parent_name"] = ""
         else:
-            category = get_category_document(db, {"_id": document["parent_name"]})
+            category = get_category_document(db, {"_id": document["parent_id"]})
             document["parent_name"] = category["name"]
+        del document["_id"]
+        del document["parent_id"]
         print(document)
         result.append(document)
     return result
@@ -153,9 +158,14 @@ def read_category(name: str, db: database = Depends(get_db)):
     result = db.categories.find_one({"name": name})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
-    if result["parent_name"] is None:
+    parent_id = result["parent_id"]
+    if parent_id is None:
         result["parent_name"] = ""
+    else:
+        # TODO convert to parent_name
+        pass
     del result["_id"]
+    del result["parent_id"]
     return result
 
 
@@ -170,6 +180,7 @@ def update_category(name: str, new_category: Category, db: database = Depends(ge
         {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
         return_document=ReturnDocument.AFTER)
     del result["_id"]
+    del result["parent_id"]
     return result
 
 
@@ -177,7 +188,7 @@ def update_category(name: str, new_category: Category, db: database = Depends(ge
 def delete_category(name: str, db: database = Depends(get_db)):
     category = get_category_document(db, {"name": name})
     validation.validate_category_no_parts(db, category)
-    validation.validate_category_children_no_parts(db, name)
+    validation.validate_category_children_no_parts(db, category)
 
     # TODO replace name with ID
     result = db.categories.find_one_and_delete({"_id": category["_id"]})
