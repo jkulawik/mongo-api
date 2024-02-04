@@ -119,6 +119,7 @@ def delete_part(serial_number: str, db: database = Depends(get_db)):
 
 @app.post("/categories", tags=["categories"])
 def create_category(category: Category, db: database = Depends(get_db)):
+    validation.validate_category_unique_name(db, category)
     validation.validate_category_fields(db, category)
     doc = {
         "name": category.name,
@@ -147,18 +148,9 @@ def read_category(name: str, db: database = Depends(get_db)):
 @app.put("/categories/{name}", tags=["categories"])
 def update_category(name: str, new_category: Category, db: database = Depends(get_db)):
     category = get_category_document(db, {"name": name})
-    if new_category.name != name:
-        validation.validate_category_fields(db, new_category)
-        validation.validate_category_no_parts(db, name)
-        validation.validate_category_children_no_parts(db, name)
-    # Parent can be updated even when parts and child categories exist
+    validation.validate_category_fields(db, new_category)
     if new_category.parent_name == "":
-        part = db.parts.find_one({"category": category["_id"]})
-        if part is not None:
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST,
-                f"can't make category {name} a base category: has parts assigned"
-            )
+        validation.validate_category_no_parts(db, category)
     result = db.categories.find_one_and_update(
         {"_id": category["_id"]},
         {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
@@ -169,10 +161,12 @@ def update_category(name: str, new_category: Category, db: database = Depends(ge
 
 @app.delete("/categories/{name}", tags=["categories"])
 def delete_category(name: str, db: database = Depends(get_db)):
-    validation.validate_category_no_parts(db, name)
+    category = get_category_document(db, {"name": name})
+    validation.validate_category_no_parts(db, category)
     validation.validate_category_children_no_parts(db, name)
 
-    result = db.categories.find_one_and_delete({"name": name})
+    # TODO replace name with ID
+    result = db.categories.find_one_and_delete({"_id": category["_id"]})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
     return {}

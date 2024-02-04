@@ -34,7 +34,7 @@ def init_data_for_delete_and_update():
     response = client.post("/categories", json={"name": "deleteme", "parent_name": "edit_cat1"})
     assert response.status_code == 200
 
-    # Add a valid part for edit_cat2
+    # Add valid parts for edit_cat2
     test_part = test_part_template.copy()
     test_part["category"] = "edit_cat2"
     response = client.post("/parts", json={"part": test_part, "location": test_location_template})
@@ -142,39 +142,47 @@ def test_category_update_nonexistent():
 
 
 def test_category_rename_with_parts_assigned():
-    new_category_data = {"name": "new_name", "parent_name": ""}
+    # Since categories are referenced by ID in the db, we can change their basic data
+    new_category_data = {"name": "new_name", "parent_name": "edit_cat1"}
     response = client.put("/categories/edit_cat2", json=new_category_data)
-    assert response.json() == {
-        "detail": "can't update/remove category edit_cat2: has parts assigned"
-    }
-    assert response.status_code == 400
+    assert response.json() == new_category_data
+    assert response.status_code == 200
+    # Revert the rename to not mess with other tests
+    new_category_data["name"] = "edit_cat2"
+    response = client.put("/categories/new_name", json=new_category_data)
+    assert response.json() == new_category_data
+    assert response.status_code == 200
 
 
 def test_category_rename_with_child_categories_assigned():
+    # Since categories are referenced by ID in the db, we can change their basic data
     new_category_data = {"name": "new_name", "parent_name": ""}
     response = client.put("/categories/edit_cat1", json=new_category_data)
-    assert response.json() == {
-        "detail": "can't update/remove category edit_cat1: child categories have parts assigned"
-    }
-    assert response.status_code == 400
+    assert response.json() == new_category_data
+    assert response.status_code == 200
+    # Revert the rename to not mess with other tests
+    new_category_data["name"] = "edit_cat1"
+    response = client.put("/categories/new_name", json=new_category_data)
+    assert response.json() == new_category_data
+    assert response.status_code == 200
 
 
 def test_category_make_base_with_parts_assigned():
     new_category_data = {"name": "edit_cat2", "parent_name": ""}
     response = client.put("/categories/edit_cat2", json=new_category_data)
     assert response.json() == {
-        "detail": "can't make category edit_cat2 a base category: has parts assigned"
+        "detail": "can't update/remove category edit_cat2: has parts assigned"
     }
 
 
-def test_category_update():
-    new_category_data = {"name": "new_name", "parent_name": "edit_cat1"}
+def test_category_update_doublecheck():
+    new_category_data = {"name": "new_name2", "parent_name": "edit_cat1"}
     response = client.put("/categories/edit_cat3", json=new_category_data)
     assert response.json() == new_category_data
     assert response.status_code == 200
     # Test if the entry is correctly updated in the db
-    response = client.get("/categories/new_name")
-    assert response.json() == {"name": "new_name", "parent_name": "edit_cat1"}
+    response = client.get("/categories/new_name2")
+    assert response.json() == {"name": "new_name2", "parent_name": "edit_cat1"}
     assert response.status_code == 200
 
 
@@ -184,7 +192,7 @@ def test_category_update():
 def test_category_delete_nonexistent():
     response = client.delete("/categories/doesntexist")
     assert response.status_code == 404
-    assert response.json() == {"detail": "category with name doesntexist does not exist"}
+    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
 
 
 def test_category_delete_with_parts_assigned():
