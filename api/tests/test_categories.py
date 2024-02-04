@@ -137,8 +137,8 @@ def test_category_read_many():
 def test_category_update_nonexistent():
     new_category_data = {"name": "new_name", "parent_name": "edit_cat1"}
     response = client.put("/categories/doesntexist", json=new_category_data)
+    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
-    assert response.json() == {"detail": "category with name doesntexist does not exist"}
 
 
 def test_category_rename_with_parts_assigned():

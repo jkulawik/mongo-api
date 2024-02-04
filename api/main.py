@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import FastAPI, status, HTTPException, Query, Depends
 from pymongo import MongoClient, ReturnDocument, CursorType, database
+from bson.objectid import ObjectId
 from .data.models import Part, Category, Location
 from .data import validation
 
@@ -50,15 +51,29 @@ def get_dicts_from_cursor(cursor: CursorType):
     return result
 
 
+def get_category_document(db: database, search_dict: dict):
+    result = db.categories.find_one(search_dict)
+    if result is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"part category {search_dict} does not exist"
+        )
+    return result
+
+
 # -------------------------- Parts -------------------------- #
 
 
 @app.post("/parts", tags=["parts"])
 def create_part(part: Part, location: Location, db: database = Depends(get_db)):
-    validation.validate_part(db, part.category)
+    # NOTE PyMongo implicitly replaces part.category with an ObjectID here. Thanks, PyMongo!
+    category = get_category_document(db, {"name": part.category})
+    validation.validate_category_accepts_parts(category)
     doc = vars(part)
     doc["location"] = vars(location)
+    doc["category"] = category["_id"]  # category is an ID in the db
     db.parts.insert_one(doc)
+    doc["category"] = category["name"]  # but we return the name instead of an ID
     del doc["_id"]
     return doc
 
@@ -71,6 +86,8 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
             status.HTTP_404_NOT_FOUND,
             f"part with serial_number {serial_number} does not exist"
         )
+    category = get_category_document(db, {"_id": result["category"]})
+    result["category"] = category["name"]
     del result["_id"]
     return result
 
@@ -88,7 +105,7 @@ def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: databa
 
 @app.put("/parts/{serial_number}", tags=["parts"])
 def update_part(serial_number: str, new_part_data: Part, new_location: Location, db: database = Depends(get_db)):
-    validation.validate_part(db, new_part_data.category)
+    validation.validate_category_accepts_parts(new_part_data.category)
     return {"detail": "parts"}
 
 
@@ -103,8 +120,6 @@ def delete_part(serial_number: str, db: database = Depends(get_db)):
 @app.post("/categories", tags=["categories"])
 def create_category(category: Category, db: database = Depends(get_db)):
     validation.validate_category(db, category)
-    if not validation.is_value_unique(db.categories, {"name": category.name}):
-        raise HTTPException(status.HTTP_409_CONFLICT, f"category {category.name} already exists")
     doc = {
         "name": category.name,
         "parent_name": category.parent_name,
@@ -131,12 +146,14 @@ def read_category(name: str, db: database = Depends(get_db)):
 
 @app.put("/categories/{name}", tags=["categories"])
 def update_category(name: str, new_category: Category, db: database = Depends(get_db)):
+    category = get_category_document(db, {"name": name})
+    # name = category["name"]  # undo PyMongo's tendency to implicitly overwrite variable data
     if new_category.name != name:
         validation.validate_category(db, new_category)
         validation.validate_category_editable(db, name)
     # Parent can be updated even when parts and child categories exist
-    part = db.parts.find_one({"category": name})
     if new_category.parent_name == "":
+        part = db.parts.find_one({"category": category["_id"]})
         if part is not None:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
@@ -146,8 +163,6 @@ def update_category(name: str, new_category: Category, db: database = Depends(ge
         {"name": name},
         {"$set": {"name": new_category.name, "parent_name": new_category.parent_name}},
         return_document=ReturnDocument.AFTER)
-    if result is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
     del result["_id"]
     return result
 

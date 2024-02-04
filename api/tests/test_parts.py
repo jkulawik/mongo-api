@@ -40,7 +40,7 @@ def test_part_add_to_nonexistent_category():
         "/parts",
         json={"part": test_part, "location": test_location_template}
     )
-    assert response.json() == {"detail": "part category doesntexist does not exist"}
+    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 400
 
 
@@ -75,7 +75,7 @@ def test_part_read_nonexistent():
     # TODO
     response = client.get("/parts/doesntexist")
     assert response.status_code == 404
-    assert response.json() == {"detail": "part with serial number doesntexist does not exist"}
+    assert response.json() == {"detail": "part with serial_number doesntexist does not exist"}
 
 
 def test_part_read():
