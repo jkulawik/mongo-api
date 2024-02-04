@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 import pytest
 import mongomock
+
 from ..main import app, get_db
 from .example_data import test_location_template, test_part_template
 
@@ -75,7 +76,7 @@ def test_part_read_nonexistent():
     # TODO
     response = client.get("/parts/doesntexist")
     assert response.status_code == 404
-    assert response.json() == {"detail": "part with serial_number doesntexist does not exist"}
+    assert response.json() == {"detail": "part {'serial_number': 'doesntexist'} does not exist"}
 
 
 def test_part_read():

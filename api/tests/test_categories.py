@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from fastapi import status
 import pytest
 import mongomock
+
 from ..main import app, get_db
 from .example_data import test_location_template, test_part_template
 

@@ -1,5 +1,6 @@
 from pymongo import collection, database
 from fastapi import HTTPException, status
+
 from .models import Category  # This gets marked by pylint as an error but it's a false positive
 
 
@@ -44,7 +45,7 @@ def validate_category_no_parts(db: database, category_document: dict):
         )
 
 
-def validate_category_children_no_parts(db: database, category_document: dict):
+def validate_category_children_have_no_parts(db: database, category_document: dict):
     # Ensure that a parent category can't be removed if it has child categories with parts assigned.
     cursor = db.categories.find({"parent_id": category_document["_id"]})
     for document in cursor:
