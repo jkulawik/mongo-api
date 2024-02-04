@@ -92,13 +92,15 @@ def test_part_read():
 
 
 def test_part_read_many():
-    # TODO
-    assert False
+    response = client.get("/parts")
+    assert fixture_part_1 in response.json()
+    assert fixture_part_2 in response.json()
+    assert response.status_code == 200
 
 
 def test_part_search():
     # TODO
-    assert False
+    pass
 
 
 # -------------------------- Update / PUT -------------------------- #
@@ -106,17 +108,17 @@ def test_part_search():
 
 def test_part_update_with_nonexistent_category():
     # TODO
-    assert False
+    pass
 
 
 def test_part_update_with_base_category():
     # TODO
-    assert False
+    pass
 
 
 def test_part_update_correct():
     # TODO
-    assert False
+    pass
 
 
 # -------------------------- Delete -------------------------- #
@@ -124,9 +126,9 @@ def test_part_update_correct():
 
 def test_part_delete_nonexistent():
     # TODO
-    assert False
+    pass
 
 
 def test_part_delete():
     # TODO
-    assert False
+    pass

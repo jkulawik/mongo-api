@@ -31,6 +31,11 @@ def validate_category_fields(db: database, category: Category):
         )
 
 
+def validate_part_cuvette_not_taken(db: database, location: Location):
+    # TODO
+    pass
+
+
 # -------------------------- Validation of existing documents -------------------------- #
 
 
