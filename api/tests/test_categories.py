@@ -54,7 +54,7 @@ def test_category_add_invalid():
 
 
 def test_category_add_self_referencing():
-    # Test self-referencing category
+    # Category should not have itself as parent
     response = client.post("/categories", json={"name": "resistors", "parent_name": "resistors"})
     assert response.json() == {"detail": "category parent name can't be same as category name"}
     assert response.status_code == 400
@@ -68,13 +68,10 @@ def test_category_add_base_correct():
 
 
 def test_category_add_duplicate():
-    # Test trying to add duplicates
-    test_category = {"name": "def", "parent_name": ""}
+    # Names should not repeat
+    test_category = {"name": "edit_cat1", "parent_name": ""}
     response = client.post("/categories", json=test_category)
-    assert response.json() == test_category
-    assert response.status_code == 200
-    response = client.post("/categories", json={"name": "def", "parent_name": ""})
-    assert response.json() == {"detail": "category def already exists"}
+    assert response.json() == {"detail": "category edit_cat1 already exists"}
     assert response.status_code == 409
 
 
@@ -86,12 +83,12 @@ def test_category_add_with_nonexistent_parent():
 
 
 def test_category_add_correct():
-    # Add a valid parent
+    # Test adding a valid base category
     test_category_1 = {"name": "123", "parent_name": ""}
     response = client.post("/categories", json=test_category_1)
     assert response.json() == test_category_1
     assert response.status_code == 200
-    # Test add a category with valid parent
+    # Test adding a valid category with valid parent
     test_category_2 = {"name": "456", "parent_name": "123"}
     response = client.post("/categories", json=test_category_2)
     assert response.json() == test_category_2
@@ -107,27 +104,17 @@ def test_category_read_nonexistent():
 
 
 def test_category_read_correct():
-    # Create an entry to get
-    client.post("/categories", json={"name": "test_category", "parent_name": ""})
     # Test basic get
-    response = client.get("/categories/test_category")
-    assert response.json() == {"name": "test_category", "parent_name": ""}
+    response = client.get("/categories/edit_cat2")
+    assert response.json() == {"name": "edit_cat2", "parent_name": "edit_cat1"}
     assert response.status_code == 200
 
 
 def test_category_read_many():
-    # Insert test data
-    response = client.post("/categories", json={"name": "test_category2", "parent_name": ""})
-    assert response.json() == {"name": "test_category2", "parent_name": ""}
-    assert response.status_code == 200
-    response = client.post("/categories", json={"name": "test_category3", "parent_name": ""})
-    assert response.json() == {"name": "test_category3", "parent_name": ""}
-    assert response.status_code == 200
-    # Test the all categories endpoint
     response = client.get("/categories")
     # NOTE categories from previous tests are still present so no direct comparison here
-    assert {"name": "test_category2", "parent_name": ""} in response.json()
-    assert {"name": "test_category3", "parent_name": ""} in response.json()
+    assert {"name": "edit_cat2", "parent_name": "edit_cat1"} in response.json()
+    assert {"name": "edit_cat1", "parent_name": ""} in response.json()
     assert response.status_code == 200
 
 
