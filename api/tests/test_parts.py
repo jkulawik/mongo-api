@@ -1,10 +1,24 @@
 from fastapi.testclient import TestClient
 import pytest
-from ..main import app
+import mongomock
+from ..main import app, get_db
 from .example_data import test_location_template, test_part_template
 
 client = TestClient(app)
 
+# This segment can be put in override_db() to run each test with a fresh db,
+# but using the same instance requires less boilerplate
+test_client = mongomock.MongoClient()
+test_db = test_client["test_db"]
+
+def override_db():
+    try:
+        yield test_db
+    finally:
+        pass
+
+
+app.dependency_overrides[get_db] = override_db
 
 @pytest.fixture(scope="session", autouse=True)
 def init_data_for_parts_testing():
