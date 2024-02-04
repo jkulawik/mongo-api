@@ -1,7 +1,8 @@
 from pymongo import collection, database
 from fastapi import HTTPException, status
 
-from .models import Category  # This gets marked by pylint as an error but it's a false positive
+# NOTE: This gets marked by pylint as an error but it's a false positive
+from .models import Category, Location
 
 
 # -------------------------- Validation of new data -------------------------- #

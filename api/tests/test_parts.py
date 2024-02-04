@@ -117,8 +117,21 @@ def test_part_update_with_base_category():
 
 
 def test_part_update_correct():
-    # TODO
-    pass
+    new_part_data = fixture_part_1.copy()
+    new_part_data["serial_number"] = "new_serial_no"
+    response = client.put(
+        "/parts/example_serial_no",
+        json={"part": new_part_data, "location": new_part_data["location"]}
+    )
+    assert response.json() == new_part_data
+    assert response.status_code == 200
+    # Revert the change to not mess with other tests
+    response = client.put(
+        "/parts/new_serial_no",
+        json={"part": fixture_part_1, "location": fixture_part_1["location"]}
+    )
+    assert response.json() == fixture_part_1
+    assert response.status_code == 200
 
 
 # -------------------------- Delete -------------------------- #
