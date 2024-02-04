@@ -23,6 +23,7 @@ def override_db():
 app.dependency_overrides[get_db] = override_db
 
 
+# TODO fixture probably shouldn't use the API
 @pytest.fixture(scope="session", autouse=True)
 def init_data_for_delete_and_update():
     # Add base category and subcategories

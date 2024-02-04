@@ -21,12 +21,21 @@ def override_db():
 
 app.dependency_overrides[get_db] = override_db
 
+# TODO fixture probably shouldn't use the API
 @pytest.fixture(scope="session", autouse=True)
 def init_data_for_parts_testing():
     # Add base category and subcategory
     response = client.post("/categories", json={"name": "base_parts", "parent_name": ""})
     assert response.status_code == 200
     response = client.post("/categories", json={"name": "test_parts", "parent_name": "base_parts"})
+    assert response.status_code == 200
+    # Add a test part
+    response = client.post(
+        "/parts",
+        json={"part": test_part_template, "location": test_location_template}
+    )
+    assert response.json() == test_part_template
+    assert response.json()["location"] == test_location_template
     assert response.status_code == 200
 
 
@@ -47,9 +56,11 @@ def test_part_add_to_nonexistent_category():
 
 def test_part_add_to_base_category():
     # Test trying to add to base category
+    test_part = test_part_template.copy()
+    test_part["category"] = "base_parts"
     response = client.post(
         "/parts",
-        json={"part": test_part_template, "location": test_location_template}
+        json={"part": test_part, "location": test_location_template}
     )
     assert response.json() == {"detail": "part can't be assigned to a base category (base_parts)"}
     assert response.status_code == 400
@@ -58,7 +69,6 @@ def test_part_add_to_base_category():
 def test_part_add_correct():
     # Test trying to add to a valid part
     test_part = test_part_template.copy()
-    test_part["category"] = "test_parts"
     response = client.post(
         "/parts",
         json={"part": test_part, "location": test_location_template}
@@ -73,15 +83,15 @@ def test_part_add_correct():
 # -------------------------- Read / GET -------------------------- #
 
 def test_part_read_nonexistent():
-    # TODO
     response = client.get("/parts/doesntexist")
     assert response.status_code == 404
     assert response.json() == {"detail": "part {'serial_number': 'doesntexist'} does not exist"}
 
 
 def test_part_read():
-    # TODO
-    assert False
+    response = client.get("/parts/example_serial_no")
+    assert response.json() == test_part_template
+    assert response.status_code == 200
 
 
 # -------------------------- Update / PUT -------------------------- #
