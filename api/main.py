@@ -119,7 +119,7 @@ def delete_part(serial_number: str, db: database = Depends(get_db)):
 
 @app.post("/categories", tags=["categories"])
 def create_category(category: Category, db: database = Depends(get_db)):
-    validation.validate_category(db, category)
+    validation.validate_category_fields(db, category)
     doc = {
         "name": category.name,
         "parent_name": category.parent_name,
@@ -147,10 +147,10 @@ def read_category(name: str, db: database = Depends(get_db)):
 @app.put("/categories/{name}", tags=["categories"])
 def update_category(name: str, new_category: Category, db: database = Depends(get_db)):
     category = get_category_document(db, {"name": name})
-    # name = category["name"]  # undo PyMongo's tendency to implicitly overwrite variable data
     if new_category.name != name:
-        validation.validate_category(db, new_category)
-        validation.validate_category_editable(db, name)
+        validation.validate_category_fields(db, new_category)
+        validation.validate_category_no_parts(db, name)
+        validation.validate_category_children_no_parts(db, name)
     # Parent can be updated even when parts and child categories exist
     if new_category.parent_name == "":
         part = db.parts.find_one({"category": category["_id"]})
@@ -169,7 +169,8 @@ def update_category(name: str, new_category: Category, db: database = Depends(ge
 
 @app.delete("/categories/{name}", tags=["categories"])
 def delete_category(name: str, db: database = Depends(get_db)):
-    validation.validate_category_editable(db, name)
+    validation.validate_category_no_parts(db, name)
+    validation.validate_category_children_no_parts(db, name)
 
     result = db.categories.find_one_and_delete({"name": name})
     if result is None:

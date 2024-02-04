@@ -7,7 +7,7 @@ def is_value_unique(_collection: collection, _filter: dict) -> bool:
     return _collection.count_documents(_filter, limit=1) == 0
 
 
-def validate_category(db: database, category: Category):
+def validate_category_fields(db: database, category: Category):
     if not is_value_unique(db.categories, {"name": category.name}):
         raise HTTPException(status.HTTP_409_CONFLICT, f"category {category.name} already exists")
     if category.parent_name == category.name:
@@ -24,7 +24,7 @@ def validate_category(db: database, category: Category):
         )
 
 
-def validate_category_editable(db: database, name: str):
+def validate_category_no_parts(db: database, name: str):
     # Ensure that a category cannot be edited/removed if there are parts assigned to it.
     category = db.categories.find_one({"name": name})
     if category is None:
@@ -35,6 +35,9 @@ def validate_category_editable(db: database, name: str):
             status.HTTP_400_BAD_REQUEST,
             f"can't update/remove category {name}: has parts assigned"
         )
+
+
+def validate_category_children_no_parts(db: database, name: str):
     # Ensure that a parent category can't be removed if it has child categories with parts assigned.
     cursor = db.categories.find({"parent_name": name})
     for document in cursor:
@@ -47,10 +50,8 @@ def validate_category_editable(db: database, name: str):
             )
 
 
-# -------------------------- Parts -------------------------- #
-
-
 def validate_category_accepts_parts(category: dict):
+    # Ensure that a part cannot be in a base category.
     if category["parent_name"] == "":
         name = category["name"]
         raise HTTPException(

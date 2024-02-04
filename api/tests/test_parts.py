@@ -41,7 +41,7 @@ def test_part_add_to_nonexistent_category():
         json={"part": test_part, "location": test_location_template}
     )
     assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
-    assert response.status_code == 400
+    assert response.status_code == 404
 
 
 def test_part_add_to_base_category():
