@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import FastAPI, status, HTTPException, Query, Depends
-from pymongo import MongoClient, ReturnDocument, CursorType, database
+from pymongo import MongoClient, ReturnDocument, database
 from .data.models import Part, Category, Location
 from .data import validation
 
@@ -190,7 +190,6 @@ def delete_category(name: str, db: database = Depends(get_db)):
     validation.validate_category_no_parts(db, category)
     validation.validate_category_children_no_parts(db, category)
 
-    # TODO replace name with ID
     result = db.categories.find_one_and_delete({"_id": category["_id"]})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")

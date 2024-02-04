@@ -1,7 +1,10 @@
 from pymongo import collection, database
 from fastapi import HTTPException, status
 from .models import Category  # This gets marked by pylint as an error but it's a false positive
-# TODO clean up using Category, name only and db entry for validation
+
+
+# -------------------------- Validation of new data -------------------------- #
+
 
 def is_value_unique(_collection: collection, _filter: dict) -> bool:
     return _collection.count_documents(_filter, limit=1) == 0
@@ -25,6 +28,9 @@ def validate_category_fields(db: database, category: Category):
             status.HTTP_400_BAD_REQUEST,
             f"parent category with name {category.parent_name} does not exist"
         )
+
+
+# -------------------------- Validation of existing documents -------------------------- #
 
 
 def validate_category_no_parts(db: database, category_document: dict):
