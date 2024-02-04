@@ -27,11 +27,11 @@ def validate_category_fields(db: database, category: Category):
         )
 
 
-def validate_category_no_parts(db: database, category: dict):
+def validate_category_no_parts(db: database, category_document: dict):
     # Ensure that a category cannot be edited/removed if there are parts assigned to it.
-    part = db.parts.find_one({"category": category["_id"]})
+    part = db.parts.find_one({"category": category_document["_id"]})
     if part is not None:
-        category_name = category["name"]
+        category_name = category_document["name"]
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             f"can't update/remove category {category_name}: has parts assigned"
@@ -51,10 +51,10 @@ def validate_category_children_no_parts(db: database, name: str):
             )
 
 
-def validate_category_accepts_parts(category: dict):
+def validate_category_accepts_parts(category_document: dict):
     # Ensure that a part cannot be in a base category.
-    if category["parent_name"] == "":
-        name = category["name"]
+    if category_document["parent_name"] is None:
+        name = category_document["name"]
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             f"part can't be assigned to a base category ({name})"

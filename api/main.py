@@ -1,7 +1,6 @@
 from typing import Annotated
 from fastapi import FastAPI, status, HTTPException, Query, Depends
 from pymongo import MongoClient, ReturnDocument, CursorType, database
-from bson.objectid import ObjectId
 from .data.models import Part, Category, Location
 from .data import validation
 
@@ -41,15 +40,6 @@ def get_db():
 
 
 # -------------------------- Utilities -------------------------- #
-
-
-def get_dicts_from_cursor(cursor: CursorType):
-    result = []
-    for document in cursor:
-        del document["_id"]
-        result.append(document)
-    return result
-
 
 def get_category_document(db: database, search_dict: dict):
     result = db.categories.find_one(search_dict)
@@ -96,11 +86,16 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
 def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: database = Depends(get_db)):
     if q is None:
         cursor = db.parts.find({})
-        return get_dicts_from_cursor(cursor)
-    # TODO Search for parts based on all mandatory ﬁelds
+    else:
+        # TODO Search for parts based on all mandatory ﬁelds
+        pass
 
     cursor = db.parts.find({})
-    return get_dicts_from_cursor(cursor)
+    results = []
+    for document in cursor:
+        del document["_id"]
+        results.append(document)
+    return results
 
 
 @app.put("/parts/{serial_number}", tags=["parts"])
@@ -121,11 +116,17 @@ def delete_part(serial_number: str, db: database = Depends(get_db)):
 def create_category(category: Category, db: database = Depends(get_db)):
     validation.validate_category_unique_name(db, category)
     validation.validate_category_fields(db, category)
+    parent_id = None
+    if category.parent_name != "":
+        parent_category = get_category_document(db, {"name": category.parent_name})
+        if parent_category is not None:
+            parent_id = parent_category["_id"]
     doc = {
         "name": category.name,
-        "parent_name": category.parent_name,
-        }
+        "parent_name": parent_id,
+    }
     db.categories.insert_one(doc)
+    doc["parent_name"] = category.parent_name
     del doc["_id"]
     return doc
 
@@ -133,7 +134,18 @@ def create_category(category: Category, db: database = Depends(get_db)):
 @app.get("/categories", tags=["categories"])
 def read_categories(db: database = Depends(get_db)):
     cursor = db.categories.find({})
-    return get_dicts_from_cursor(cursor)
+    result = []
+    for document in cursor:
+        del document["_id"]
+        print(document)
+        if document["parent_name"] is None:
+            document["parent_name"] = ""
+        else:
+            category = get_category_document(db, {"_id": document["parent_name"]})
+            document["parent_name"] = category["name"]
+        print(document)
+        result.append(document)
+    return result
 
 
 @app.get("/categories/{name}", tags=["categories"])
@@ -141,6 +153,8 @@ def read_category(name: str, db: database = Depends(get_db)):
     result = db.categories.find_one({"name": name})
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
+    if result["parent_name"] is None:
+        result["parent_name"] = ""
     del result["_id"]
     return result
 
