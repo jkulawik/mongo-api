@@ -10,6 +10,16 @@ class Category(BaseModel):
 
 
 class Location(BaseModel):
+    """
+    Since no requirements were listed about the location data,
+    an idealised warehouse model was assumed: every cuvette,
+    shelf and bookcase have the same sizes (6 shelves per bookcase and 8x8 cuvettes).
+    
+    Indexes in these are counted from 1 because
+    that's probably what non-programmers would do in a warehouse.
+
+    Room names are arbitrary and bookcase counts don't have an upper limit.
+    """
     room: str = Field(min_length=1, max_length=DEFAULT_MAX_LEN)
     bookcase: int = Field(ge=1)
     shelf: int = Field(ge=1, le=6)

@@ -8,7 +8,9 @@ Optional: create and activate a virtual environment:
   - On Linux: `source .venv/bin/activate`
 
 Install requirements:
-```pip install -r requirements.txt```
+```
+pip install -r requirements.txt
+```
 
 The app requires a `connect_info.txt` file in the run directory.
 First line should contain a MongoDB connection string, and the 2nd one - a database name.
@@ -26,12 +28,34 @@ and removes the need of entering this data during each app launch.
 Testing: run `pytest` in the project folder.
 
 Run the app with:
-```uvicorn api.main:app --reload```
+```
+uvicorn api.main:app
+```
 
 In the console output, note the API URI (default: `http://127.0.0.1:8000`).
 Swagger docs of the API are available at `http://127.0.0.1:8000/docs`.
 All endpoints and methods are listed there,
 but a simplified API documentation is available in this markdown file.
+
+# As a Docker container
+
+Make sure the `connect_info.txt` file in the project folder contains valid connection data before building.
+
+Build image:
+```
+docker build -t mongo-crud-api .
+```
+
+Run container:
+```
+docker run -p 80:80 mongo-crud-api
+```
+
+Press `Ctrl+C` in the terminal window to stop the container.
+
+The API should be available at the IP address of your Docker interface
+(check `ip a` on Linux or `ipconfig` on Windows).
+Ideally, try the `/docs` endpoint in your browser.
 
 # Project specification
 
@@ -39,7 +63,7 @@ but a simplified API documentation is available in this markdown file.
 - Validate input using object models. A list of mandatory fields was supplied.
 - Parts collection:
   - Ensure that each part belongs to a category and that a part cannot be in a base category.
-  - Create an additional endpoint
+  - Create an additional endpoint for searching parts with any of the part properties.
 - Categories collection:
   - Ensure that a category cannot be removed if there are parts assigned to it.
   - Ensure that a parent category cannot be removed if it has child categories with parts assigned.
@@ -51,60 +75,31 @@ but a simplified API documentation is available in this markdown file.
 
 The FastAPI framework was chosen over Flask due to bigger familiarity and a more complete feature set.
 
+The app uses 3 data models: Category, Location and Part. Location is nested in the Part model.
+
 ## Data validation
 
 Basic validation (whether all mandatory fields are present, string length, min/max values)
 is handled by FastAPI and Pydantic.
-As such, some of the basic validation isn't checked explicitly.
-For example, making sure that all parts belong to a category:
-the app always requires the user to supply one that's not empty.
 
-## Locations
+Asides from the validation from the specification, the app also checks:
+- category name and part serial number uniqueness
+- whether a category parent is not being set to self
+- in each operation involving fetching categories by name: whether a category with such name exists
+- if a part is not being assigned to a location which is already in use by another part
+- all of the appropriate validation rules when a part or a category is being updated
 
-To simplify work with part location, location was given its own object model and is POSTed as a separate JSON in the request body.
-After validation, this data is appended to Part data as a dictionary to comply with the specified API schema.
+## Categories and ObjectIDs
 
-Since no requirements were listed about the location data, an idealised warehouse model was assumed: every cuvette, shelf and bookcase have the same sizes (6 shelves per bookcase and 8x8 cuvettes). Indexes in these are counted from 1 because
-that's probably what non-programmers would do in a warehouse.
-Room names are arbitrary and bookcase counts don't have an upper limit.
-
-## Document IDs
-
-In several places, `del document["_id"]` is used because
-PyMongo uses ObjectID instances instead of raw IDs.
-These objects crash FastAPI and pytest because they're not serialisable,
-and since database IDs are not required by the end user they can be simply removed from the output.
-
-## Categories
-
-At first, categories were referenced by their name in other documents.
-This approach was naive because it restricts the option to update categories,
-and creates opportunities for Parts to reference nonexistent categories.
-
-To improve this, the app now internally (including in the database) uses ObjectIDs
-whenever a category is referenced
+To enable editing category data without invalidating other Mongo documents,
+the app internally uses ObjectIDs whenever a category is referenced
 (i.e. both in Parts documents and the parent field in Category documents).
 
-This means that categories can be renamed when they have parts assigned.
-Category data still has to be validated when updating though:
-- test name uniqueness
-- whether the parent is not being set to self
-- whether parent exists
-
-As per specification, the end user should get and provide category names.
-To this end, the IDs are replaced with names when returning data and vice versa when receiving it.
-Category parents use different fields for this (`parent_id` and `parent_name`).
-The category field in parts uses the same field for both, which is incidental on the fact
-that specification asks for a field simply called `category`'
-(whereas `parent_name` clashed with using it for an ID).
-
-
-## Proposals
-
-While this is out of scope and would complicate the project, making Locations their own Mongo collection would likely simplify warehouse operations.
-
-A naive approach would be to label each cuvette with a unique name and then reference cuvettes in Parts objects.
-This would make moving cuvettes much easier and would decouple location maintenance from the Parts collection.
+As per specification, the end user should use category names as strings.
+To this end, the IDs are replaced with names when returning data and vice versa when receiving it:
+- Since the specification asks for a field simply called `category` in the Parts model, it gets simply replaced with the right data type.
+- Because the Category model should use `parent_name`,
+this field is removed and `parent_id` is inserted instead when an ObjectID is needed (and vice versa).
 
 # API documentation
 
