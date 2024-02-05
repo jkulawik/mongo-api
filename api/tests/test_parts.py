@@ -150,6 +150,7 @@ def test_part_update_with_taken_location():
 
 def test_part_update_correct():
     new_part_data = fixture_deep_copy(fixture_part_1)
+    new_part_data["location"]["row"] = 7
     new_part_data["serial_number"] = "new_serial_no"
     response = client.put(
         "/parts/example_serial_no",
