@@ -173,6 +173,7 @@ def test_category_update_doublecheck():
     response = client.put("/categories/edit_cat3", json=new_category_data)
     assert response.json() == new_category_data
     assert response.status_code == 200
+    
     # Test if the entry is correctly updated in the db
     response = client.get("/categories/new_name2")
     assert response.json() == {"name": "new_name2", "parent_name": "edit_cat1"}

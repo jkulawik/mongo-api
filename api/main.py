@@ -142,7 +142,11 @@ def update_part(serial_number: str, new_part_data: Part, new_location: Location,
 
 @app.delete("/parts/{serial_number}", tags=["parts"])
 def delete_part(serial_number: str, db: database = Depends(get_db)):
-    return {"detail": "parts"}
+    delete_filter = {"serial_number": serial_number}
+    result = db.parts.find_one_and_delete(delete_filter)
+    if result is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"part {delete_filter} does not exist")
+    return {}
 
 
 # -------------------------- Categories -------------------------- #

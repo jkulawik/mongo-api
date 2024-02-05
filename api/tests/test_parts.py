@@ -29,6 +29,7 @@ def init_data_for_parts_testing():
     assert response.status_code == 200
     response = client.post("/categories", json={"name": "test_parts", "parent_name": "base_parts"})
     assert response.status_code == 200
+    
     # Add test parts
     response = client.post(
         "/parts",
@@ -37,6 +38,7 @@ def init_data_for_parts_testing():
     assert response.json() == fixture_part_1
     assert response.json()["location"] == fixture_part_1["location"]
     assert response.status_code == 200
+
     response = client.post(
         "/parts",
         json={"part": fixture_part_2, "location": fixture_part_2["location"]}
@@ -177,6 +179,12 @@ def test_part_update_correct():
     )
     assert response.json() == new_part_data
     assert response.status_code == 200
+
+    # Test if the part is updated in the db correctly
+    response = client.get("/parts/new_serial_no")
+    assert response.json() == new_part_data
+    assert response.status_code == 200
+
     # Revert the change to not mess with other tests
     response = client.put(
         "/parts/new_serial_no",
@@ -190,10 +198,17 @@ def test_part_update_correct():
 
 
 def test_part_delete_nonexistent():
-    # TODO
-    pass
+    response = client.delete("/parts/doesntexist")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "part {'serial_number': 'doesntexist'} does not exist"}
 
 
 def test_part_delete():
-    # TODO
-    pass
+    response = client.delete("/parts/q1w2e3")
+    assert response.json() == {}
+    assert response.status_code == 200
+
+    # Test if the entry is correctly removed from the db
+    response = client.get("/parts/q1w2e3")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "part {'serial_number': 'q1w2e3'} does not exist"}
