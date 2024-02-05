@@ -98,7 +98,7 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
 
 
 @app.get("/parts", tags=["parts"])
-def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: database = Depends(get_db)):
+def read_parts(q: Annotated[str, Query(max_length=50)] = None, db: database = Depends(get_db)):
     if q is None:
         cursor = db.parts.find({})
     else:

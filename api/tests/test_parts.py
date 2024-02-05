@@ -80,7 +80,9 @@ def test_part_add_with_taken_location():
         "/parts",
         json={"part": test_part, "location": test_part["location"]}
     )
-    assert response.json() == {"detail": "another part (serial: example_serial_no) is already at location: room='basement1' bookcase=1 shelf=1 cuvette=1 column=1 row=1"}
+    err_str = "another part (serial: example_serial_no) is already at location: "
+    err_str += "room='basement1' bookcase=1 shelf=1 cuvette=1 column=1 row=1"
+    assert response.json() == {"detail": err_str}
     assert response.status_code == 400
 
 
@@ -113,7 +115,6 @@ def test_part_read():
 
 def test_part_read_many():
     response = client.get("/parts")
-    # FIXME this probably fails because it doesn't deep compare the results?
     assert fixture_part_1 in response.json()
     assert fixture_part_2 in response.json()
     assert response.status_code == 200

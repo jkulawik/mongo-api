@@ -1,4 +1,4 @@
-from pymongo import collection, database
+from pymongo import database
 from fastapi import HTTPException, status
 
 # NOTE: This gets marked by pylint as an error but it's a false positive
