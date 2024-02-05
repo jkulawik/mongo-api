@@ -11,6 +11,8 @@ COPY ./api/__init__.py /mongo_app/api/
 COPY ./api/data/models.py /mongo_app/api/data/
 COPY ./api/data/validation.py /mongo_app/api/data/
 
+COPY ./api/tests/example_data.py /mongo_app/api/tests/
+
 RUN pip install --no-cache-dir --upgrade -r /mongo_app/requirements.txt
 
 RUN pip install uvicorn

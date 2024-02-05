@@ -4,6 +4,7 @@ from pymongo import MongoClient, ReturnDocument, database
 
 from .data.models import Part, Category
 from .data import validation
+from .tests.example_data import add_test_data
 
 tags_metadata = [
     {"name": "parts"},
@@ -265,10 +266,12 @@ def delete_category(name: str, db: database = Depends(get_db)):
 # -------------------------- Extra -------------------------- #
 
 
-@app.post("/populate", tags=["extra"])
+@app.post("/repopulate", tags=["extra"])
 def add_example_data(db: database = Depends(get_db)):
     """
-    Creates several categories and parts for testing.
+    Removes all existing data and creates several categories and parts for testing.
     """
-    # TODO implement
-    pass
+    db.categories.delete_many({})
+    db.parts.delete_many({})
+    add_test_data(db)
+    return {}
