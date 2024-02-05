@@ -8,17 +8,15 @@ from .models import Category, Location, Part
 # -------------------------- Validation of new data -------------------------- #
 
 
-def is_value_unique(_collection: collection, _filter: dict) -> bool:
-    return _collection.count_documents(_filter, limit=1) == 0
-
-
 def validate_category_unique_name(db: database, category: Category):
-    if not is_value_unique(db.categories, {"name": category.name}):
+    duplicate = db.categories.find_one({"name": category.name})
+    if duplicate is not None:
         raise HTTPException(status.HTTP_409_CONFLICT, f"category {category.name} already exists")
 
 
 def validate_part_unique_serial(db: database, part: Part):
-    if not is_value_unique(db.parts, {"serial_number": part.serial_number}):
+    duplicate = db.parts.find_one({"serial_number": part.serial_number})
+    if duplicate is not None:
         raise HTTPException(status.HTTP_409_CONFLICT, f"serial {part.serial_number} already exists")
 
 
@@ -29,17 +27,13 @@ def validate_category_fields(db: database, category: Category):
             "category parent name can't be same as category name"
         )
 
-    result = db.categories.find_one({"name": category.parent_name})
-    if result is None and category.parent_name != "":
+    parent_category_document = db.categories.find_one({"name": category.parent_name})
+    if parent_category_document is None and category.parent_name != "":
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             f"parent category with name {category.parent_name} does not exist"
         )
 
-
-def validate_part_cuvette_not_taken(db: database, location: Location):
-    # TODO
-    pass
 
 
 # -------------------------- Validation of existing documents -------------------------- #
@@ -59,8 +53,8 @@ def validate_category_no_parts(db: database, category_document: dict):
 def validate_category_children_have_no_parts(db: database, category_document: dict):
     # Ensure that a parent category can't be removed if it has child categories with parts assigned.
     cursor = db.categories.find({"parent_id": category_document["_id"]})
-    for document in cursor:
-        child_category_id = document["_id"]
+    for child_document in cursor:
+        child_category_id = child_document["_id"]
         child_part = db.parts.find_one({"category": child_category_id})
         if child_part is not None:
             name = category_document["name"]
@@ -77,4 +71,13 @@ def validate_category_accepts_parts(category_document: dict):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
             f"part can't be assigned to a base category ({name})"
+        )
+
+
+def validate_part_cuvette_not_taken(db: database, location: Location):
+    part_in_location = db.parts.find_one({"location": location})
+    if part_in_location is not None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"another part is already at location: {location}"
         )
