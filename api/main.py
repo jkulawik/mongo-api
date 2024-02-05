@@ -1,10 +1,11 @@
 from typing import Annotated
-from fastapi import FastAPI, status, HTTPException, Query, Depends
+from fastapi import FastAPI, status, HTTPException, Depends
 from pymongo import MongoClient, ReturnDocument, database
 
 from .data.models import Part, Category
 from .data import validation
 from .tests.example_data import add_test_data
+from .search import search_params, search_parts
 
 tags_metadata = [
     {"name": "parts"},
@@ -22,17 +23,7 @@ with open('connect_info.txt', 'r', encoding="utf-8") as file:
 
 client = MongoClient(connection_string)
 _database = client[db_name]
-
-# collections = _database.list_collection_names()
-# if "parts" in collections:
-#     _database.parts.delete_many({})  # delete all documents
-# else:
-#     _database.create_collection("parts")
-# if "categories" in collections:
-#     _database.categories.delete_many({})
-# else:
-#     _database.create_collection("categories")
-
+_database.categories.create_index({"$**": "text"})  # all text fields
 
 # Dependency - note that this is ran each time a function with Depends is called
 def get_db():
@@ -43,6 +34,7 @@ def get_db():
 
 
 # -------------------------- Utilities -------------------------- #
+
 
 def get_category_document(db: database, search_dict: dict):
     result = db.categories.find_one(search_dict)
@@ -103,25 +95,23 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
 
 
 @app.get("/parts", tags=["parts"])
-def read_parts(q: Annotated[str, Query(max_length=50)] = None, db: database = Depends(get_db)):
+def read_parts(params: Annotated[dict | None, Depends(search_params)] = None, db: database = Depends(get_db)):
     """
     Searches parts using the JSON from the body.
     Fetches all parts if no search JSON is supplied.
     """
-    if q is None:
-        cursor = db.parts.find({})
-    else:
-        # TODO Search for parts based on all mandatory ﬁelds
-        pass
-
-    cursor = db.parts.find({})
     results = []
-    for document in cursor:
+    if params is None:
+        results = list(db.parts.find({}))
+    else:
+        matches = search_parts(db, params)
+        results = list(matches)
+
+    for document in results:
         # Replace ObjectIDs with string names for the API and remove the unnecessary ones
         category_document = get_category_document(db, {"_id": document["category"]})
         document["category"] = category_document["name"]
         del document["_id"]
-        results.append(document)
     return results
 
 

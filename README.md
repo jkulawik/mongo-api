@@ -37,6 +37,8 @@ Swagger docs of the API are available at `http://127.0.0.1:8000/docs`.
 All endpoints and methods are listed there,
 but a simplified API documentation is available in this markdown file.
 
+To populate the database with example data, POST to `/repopulate` (e.g. using the Swagger docs).
+
 # As a Docker container
 
 Make sure the `connect_info.txt` file in the project folder contains valid connection data before building.

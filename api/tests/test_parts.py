@@ -2,7 +2,8 @@ from fastapi.testclient import TestClient
 import mongomock
 
 from ..main import app, get_db
-from .example_data import fixture_part_1, fixture_part_2, fixture_deep_copy, add_test_data
+from .example_data import fixture_part_1, fixture_part_2, fixture_part_3, fixture_part_4
+from .example_data import fixture_deep_copy, add_test_data
 
 client = TestClient(app)
 
@@ -83,9 +84,49 @@ def test_part_read_many():
     assert response.status_code == 200
 
 
-def test_part_search():
-    # TODO implement
-    pass
+def test_part_search_by_serial():
+    # Search a serial
+    response = client.get("/parts?t=q1w2e3")
+    assert fixture_part_1 not in response.json()
+    assert fixture_part_2 in response.json()
+    assert fixture_part_3 not in response.json()
+    assert response.status_code == 200
+
+
+def test_part_search_by_multiple():
+    # Search in serial and name at the same time
+    response = client.get("/parts?t=brr")
+    assert fixture_part_1 not in response.json()
+    assert fixture_part_2 in response.json()
+    assert fixture_part_4 in response.json()
+    assert response.status_code == 200
+
+
+def test_part_search_by_room():
+    # Search a location
+    response = client.get("/parts?t=room")
+    assert fixture_part_1 not in response.json()
+    assert fixture_part_2 not in response.json()
+    assert fixture_part_3 in response.json()
+    assert response.status_code == 200
+
+
+def test_part_search_by_description():
+    # Search a description
+    response = client.get("/parts?t=legs")
+    assert fixture_part_1 in response.json()
+    assert fixture_part_2 not in response.json()
+    assert fixture_part_3 not in response.json()
+    assert response.status_code == 200
+
+
+def test_part_search_by_category():
+    # Search a category name
+    response = client.get("/parts?t=parts")
+    assert fixture_part_1 in response.json()
+    assert fixture_part_2 in response.json()
+    assert fixture_part_3 in response.json()
+    assert response.status_code == 200
 
 
 # -------------------------- Update / PUT -------------------------- #
