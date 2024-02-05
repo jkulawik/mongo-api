@@ -117,11 +117,26 @@ def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: databa
 
 @app.put("/parts/{serial_number}", tags=["parts"])
 def update_part(serial_number: str, new_part_data: Part, new_location: Location, db: database = Depends(get_db)):
-    category_document = get_category_document(db, {"name": new_part_data.category})
-    validation.validate_category_accepts_parts(category_document)
+    new_category_document = get_category_document(db, {"name": new_part_data.category})
+    validation.validate_category_accepts_parts(new_category_document)
+    validation.validate_part_unique_serial(db, new_part_data)
     # validation.validate_part_cuvette_not_taken(db, new_location)
-    # TODO don't forget to update category ID
-    return {"detail": "parts"}
+
+    update_data = vars(new_part_data)
+    update_data["location"] = vars(new_location)
+    update_data["category"] = new_category_document["_id"]
+
+    updated_part = db.parts.find_one_and_update(
+        {"serial_number": serial_number},
+        {"$set": update_data},
+        return_document=ReturnDocument.AFTER
+    )
+
+    # Replace ObjectIDs with string names for the API and remove the unnecessary ones
+    updated_part["category"] = new_category_document["name"]
+    del updated_part["_id"]
+    print(updated_part)
+    return updated_part
 
 
 @app.delete("/parts/{serial_number}", tags=["parts"])
@@ -203,6 +218,7 @@ def update_category(name: str, new_category_data: Category, db: database = Depen
         new_parent_document = get_category_document(db, {"name": new_category_data.parent_name})
         new_parent_id = new_parent_document["_id"]
 
+    # TODO rename this to updated_category
     new_category = db.categories.find_one_and_update(
         {"_id": category_document["_id"]},
         {"$set": {"name": new_category_data.name, "parent_id": new_parent_id}},
