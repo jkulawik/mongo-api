@@ -8,6 +8,7 @@ from .data import validation
 tags_metadata = [
     {"name": "parts"},
     {"name": "categories"},
+    {"name": "extra"},
 ]
 
 app = FastAPI()
@@ -88,6 +89,9 @@ def create_part(part: Part, db: database = Depends(get_db)):
 
 @app.get("/parts/{serial_number}", tags=["parts"])
 def read_part(serial_number: str, db: database = Depends(get_db)):
+    """
+    Fetches data of the part with the requested serial number.
+    """
     part_document = get_part_document(db, {"serial_number": serial_number})
     category_document = get_category_document(db, {"_id": part_document["category"]})
 
@@ -99,6 +103,10 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
 
 @app.get("/parts", tags=["parts"])
 def read_parts(q: Annotated[str, Query(max_length=50)] = None, db: database = Depends(get_db)):
+    """
+    Searches parts using the JSON from the body.
+    Fetches all parts if no search JSON is supplied.
+    """
     if q is None:
         cursor = db.parts.find({})
     else:
@@ -179,6 +187,9 @@ def create_category(category: Category, db: database = Depends(get_db)):
 
 @app.get("/categories", tags=["categories"])
 def read_categories(db: database = Depends(get_db)):
+    """
+    Fetches all categories.
+    """
     categories = []
     for document in db.categories.find({}):
         # Replace ObjectIDs with string names for the API and remove the unnecessary ones
@@ -195,6 +206,9 @@ def read_categories(db: database = Depends(get_db)):
 
 @app.get("/categories/{name}", tags=["categories"])
 def read_category(name: str, db: database = Depends(get_db)):
+    """
+    Fetches data of a category with the requested name.
+    """
     category_document = get_category_document(db, {"name": name})
 
     # Replace ObjectIDs with string names for the API and remove the unnecessary ones
@@ -246,3 +260,15 @@ def delete_category(name: str, db: database = Depends(get_db)):
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"category with name {name} does not exist")
     return {}
+
+
+# -------------------------- Extra -------------------------- #
+
+
+@app.post("/populate", tags=["extra"])
+def add_example_data(db: database = Depends(get_db)):
+    """
+    Creates several categories and parts for testing.
+    """
+    # TODO implement
+    pass
