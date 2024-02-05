@@ -37,6 +37,13 @@ def init_data_for_parts_testing():
     assert response.json() == fixture_part_1
     assert response.json()["location"] == fixture_part_1["location"]
     assert response.status_code == 200
+    response = client.post(
+        "/parts",
+        json={"part": fixture_part_2, "location": fixture_part_2["location"]}
+    )
+    assert response.json() == fixture_part_2
+    assert response.json()["location"] == fixture_part_2["location"]
+    assert response.status_code == 200
 
 
 # -------------------------- Add / POST -------------------------- #
@@ -106,6 +113,7 @@ def test_part_read():
 
 def test_part_read_many():
     response = client.get("/parts")
+    # FIXME this probably fails because it doesn't deep compare the results?
     assert fixture_part_1 in response.json()
     assert fixture_part_2 in response.json()
     assert response.status_code == 200

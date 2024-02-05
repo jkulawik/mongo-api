@@ -158,7 +158,7 @@ def create_category(category: Category, db: database = Depends(get_db)):
         parent_category = get_category_document(db, {"name": category.parent_name})
         if parent_category is not None:
             parent_id = parent_category["_id"]
-    
+
     category_document = {
         "name": category.name,
         "parent_id": parent_id,
