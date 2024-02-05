@@ -106,6 +106,9 @@ def read_parts(params: Annotated[dict | None, Depends(search_params)] = None, db
     else:
         matches = search_parts(db, params)
         results = list(matches)
+    
+    if len(results) == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "no parts match the query")
 
     for document in results:
         # Replace ObjectIDs with string names for the API and remove the unnecessary ones
