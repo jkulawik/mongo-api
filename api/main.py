@@ -120,7 +120,8 @@ def read_parts(q: Annotated[str, Query(max_length=50)] = None, db: database = De
 def update_part(serial_number: str, new_part_data: Part, new_location: Location, db: database = Depends(get_db)):
     new_category_document = get_category_document(db, {"name": new_part_data.category})
     validation.validate_category_accepts_parts(new_category_document)
-    validation.validate_part_unique_serial(db, new_part_data)
+    if new_part_data.serial_number != serial_number:
+        validation.validate_part_unique_serial(db, new_part_data)
     validation.validate_part_cuvette_not_taken(db, new_location)
 
     update_data = vars(new_part_data)
