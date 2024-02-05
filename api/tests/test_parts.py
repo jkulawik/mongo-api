@@ -3,7 +3,7 @@ import pytest
 import mongomock
 
 from ..main import app, get_db
-from .example_data import fixture_part_1, fixture_part_2
+from .example_data import fixture_part_1, fixture_part_2, fixture_deep_copy
 
 client = TestClient(app)
 
@@ -43,12 +43,12 @@ def init_data_for_parts_testing():
 
 
 def test_part_add_to_nonexistent_category():
-    test_part = fixture_part_1.copy()
+    test_part = fixture_deep_copy(fixture_part_1)
     test_part["category"] = "doesntexist"
     # Test trying to add nonexistent category
     response = client.post(
         "/parts",
-        json={"part": test_part, "location": fixture_part_1["location"]}
+        json={"part": test_part, "location": test_part["location"]}
     )
     assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
@@ -56,23 +56,35 @@ def test_part_add_to_nonexistent_category():
 
 def test_part_add_to_base_category():
     # Test trying to add to base category
-    test_part = fixture_part_1.copy()
+    test_part = fixture_deep_copy(fixture_part_1)
     test_part["category"] = "base_parts"
     response = client.post(
         "/parts",
-        json={"part": test_part, "location": fixture_part_1["location"]}
+        json={"part": test_part, "location": test_part["location"]}
     )
     assert response.json() == {"detail": "part can't be assigned to a base category (base_parts)"}
     assert response.status_code == 400
 
 
+def test_part_add_with_taken_location():
+    test_part = fixture_deep_copy(fixture_part_1)
+    test_part["serial_number"] = "taken"
+    response = client.post(
+        "/parts",
+        json={"part": test_part, "location": test_part["location"]}
+    )
+    assert response.json() == {"detail": "another part (serial: example_serial_no) is already at location: room='basement1' bookcase=1 shelf=1 cuvette=1 column=1 row=1"}
+    assert response.status_code == 400
+
+
 def test_part_add_correct():
     # Test trying to add to a valid part
-    test_part = fixture_part_1.copy()
+    test_part = fixture_deep_copy(fixture_part_1)
+    test_part["location"]["row"] = 2
     test_part["serial_number"] = "qwerty"
     response = client.post(
         "/parts",
-        json={"part": test_part, "location": fixture_part_1["location"]}
+        json={"part": test_part, "location": test_part["location"]}
     )
     assert response.json() == test_part
     assert response.status_code == 200
@@ -108,7 +120,7 @@ def test_part_search():
 
 
 def test_part_update_with_nonexistent_category():
-    new_part_data = fixture_part_1.copy()
+    new_part_data = fixture_deep_copy(fixture_part_1)
     new_part_data["serial_number"] = "blabla"
     new_part_data["category"] = "doesntexist"
     response = client.put(
@@ -120,7 +132,7 @@ def test_part_update_with_nonexistent_category():
 
 
 def test_part_update_with_base_category():
-    new_part_data = fixture_part_1.copy()
+    new_part_data = fixture_deep_copy(fixture_part_1)
     new_part_data["serial_number"] = "blabla"
     new_part_data["category"] = "base_parts"
     response = client.put(
@@ -137,7 +149,7 @@ def test_part_update_with_taken_location():
 
 
 def test_part_update_correct():
-    new_part_data = fixture_part_1.copy()
+    new_part_data = fixture_deep_copy(fixture_part_1)
     new_part_data["serial_number"] = "new_serial_no"
     response = client.put(
         "/parts/example_serial_no",

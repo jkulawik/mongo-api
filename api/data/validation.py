@@ -75,9 +75,10 @@ def validate_category_accepts_parts(category_document: dict):
 
 
 def validate_part_cuvette_not_taken(db: database, location: Location):
-    part_in_location = db.parts.find_one({"location": location})
+    part_in_location = db.parts.find_one({"location": vars(location)})
     if part_in_location is not None:
+        part_serial = part_in_location["serial_number"]
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            f"another part is already at location: {location}"
+            f"another part (serial: {part_serial}) is already at location: {location}"
         )

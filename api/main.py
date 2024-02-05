@@ -70,6 +70,7 @@ def create_part(part: Part, location: Location, db: database = Depends(get_db)):
     category_document = get_category_document(db, {"name": part.category})
     validation.validate_category_accepts_parts(category_document)
     validation.validate_part_unique_serial(db, part)
+    validation.validate_part_cuvette_not_taken(db, location)
 
     # Create a part dict
     part_document = vars(part)
@@ -120,7 +121,7 @@ def update_part(serial_number: str, new_part_data: Part, new_location: Location,
     new_category_document = get_category_document(db, {"name": new_part_data.category})
     validation.validate_category_accepts_parts(new_category_document)
     validation.validate_part_unique_serial(db, new_part_data)
-    # validation.validate_part_cuvette_not_taken(db, new_location)
+    validation.validate_part_cuvette_not_taken(db, new_location)
 
     update_data = vars(new_part_data)
     update_data["location"] = vars(new_location)
@@ -135,7 +136,6 @@ def update_part(serial_number: str, new_part_data: Part, new_location: Location,
     # Replace ObjectIDs with string names for the API and remove the unnecessary ones
     updated_part["category"] = new_category_document["name"]
     del updated_part["_id"]
-    print(updated_part)
     return updated_part
 
 

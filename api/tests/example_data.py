@@ -31,3 +31,9 @@ fixture_part_2 = {
         "row": 7,
     }
 }
+
+
+def fixture_deep_copy(fixture: dict):
+    copy = fixture.copy()
+    copy["location"] = fixture["location"].copy()
+    return copy
