@@ -69,6 +69,7 @@ def get_part_document(db: database, search_dict: dict):
 def create_part(part: Part, location: Location, db: database = Depends(get_db)):
     category_document = get_category_document(db, {"name": part.category})
     validation.validate_category_accepts_parts(category_document)
+    validation.validate_part_unique_serial(db, part)
 
     # Create a part dict
     part_document = vars(part)
@@ -107,8 +108,9 @@ def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: databa
     results = []
     for document in cursor:
         # Replace ObjectIDs with string names for the API and remove the unnecessary ones
+        category_document = get_category_document(db, {"_id": document["category"]})
+        document["category"] = category_document["name"]
         del document["_id"]
-        # TODO replace category object id with name
         results.append(document)
     return results
 

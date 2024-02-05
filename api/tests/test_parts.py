@@ -69,6 +69,7 @@ def test_part_add_to_base_category():
 def test_part_add_correct():
     # Test trying to add to a valid part
     test_part = fixture_part_1.copy()
+    test_part["serial_number"] = "qwerty"
     response = client.post(
         "/parts",
         json={"part": test_part, "location": fixture_part_1["location"]}

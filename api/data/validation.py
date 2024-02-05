@@ -2,7 +2,7 @@ from pymongo import collection, database
 from fastapi import HTTPException, status
 
 # NOTE: This gets marked by pylint as an error but it's a false positive
-from .models import Category, Location
+from .models import Category, Location, Part
 
 
 # -------------------------- Validation of new data -------------------------- #
@@ -15,6 +15,11 @@ def is_value_unique(_collection: collection, _filter: dict) -> bool:
 def validate_category_unique_name(db: database, category: Category):
     if not is_value_unique(db.categories, {"name": category.name}):
         raise HTTPException(status.HTTP_409_CONFLICT, f"category {category.name} already exists")
+
+
+def validate_part_unique_serial(db: database, part: Part):
+    if not is_value_unique(db.parts, {"serial_number": part.serial_number}):
+        raise HTTPException(status.HTTP_409_CONFLICT, f"serial {part.serial_number} already exists")
 
 
 def validate_category_fields(db: database, category: Category):

@@ -39,7 +39,9 @@ def init_data_for_delete_and_update():
     # Add valid parts for edit_cat2
     test_part = fixture_part_1.copy()
     test_part["category"] = "edit_cat2"
-    response = client.post("/parts", json={"part": test_part, "location": fixture_part_1["location"]})
+    test_part["serial_number"] = "zxcasd"
+    test_part["name"] = "category test part"
+    response = client.post("/parts", json={"part": test_part, "location": test_part["location"]})
     assert response.status_code == 200
 
 
