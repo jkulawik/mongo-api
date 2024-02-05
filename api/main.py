@@ -117,7 +117,9 @@ def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: databa
 
 @app.put("/parts/{serial_number}", tags=["parts"])
 def update_part(serial_number: str, new_part_data: Part, new_location: Location, db: database = Depends(get_db)):
-    validation.validate_category_accepts_parts(new_part_data.category)
+    category_document = get_category_document(db, {"name": new_part_data.category})
+    validation.validate_category_accepts_parts(category_document)
+    # validation.validate_part_cuvette_not_taken(db, new_location)
     # TODO don't forget to update category ID
     return {"detail": "parts"}
 

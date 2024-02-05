@@ -108,11 +108,30 @@ def test_part_search():
 
 
 def test_part_update_with_nonexistent_category():
-    # TODO
-    pass
+    new_part_data = fixture_part_1.copy()
+    new_part_data["serial_number"] = "blabla"
+    new_part_data["category"] = "doesntexist"
+    response = client.put(
+        "/parts/example_serial_no",
+        json={"new_part_data": new_part_data, "new_location": new_part_data["location"]}
+    )
+    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
+    assert response.status_code == 404
 
 
 def test_part_update_with_base_category():
+    new_part_data = fixture_part_1.copy()
+    new_part_data["serial_number"] = "blabla"
+    new_part_data["category"] = "base_parts"
+    response = client.put(
+        "/parts/example_serial_no",
+        json={"new_part_data": new_part_data, "new_location": new_part_data["location"]}
+    )
+    assert response.json() == {"detail": "part can't be assigned to a base category (base_parts)"}
+    assert response.status_code == 400
+
+
+def test_part_update_with_taken_location():
     # TODO
     pass
 
@@ -122,7 +141,7 @@ def test_part_update_correct():
     new_part_data["serial_number"] = "new_serial_no"
     response = client.put(
         "/parts/example_serial_no",
-        json={"part": new_part_data, "location": new_part_data["location"]}
+        json={"new_part_data": new_part_data, "new_location": new_part_data["location"]}
     )
     assert response.json() == new_part_data
     assert response.status_code == 200
