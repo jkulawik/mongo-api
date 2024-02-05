@@ -153,8 +153,18 @@ def test_part_update_with_base_category():
 
 
 def test_part_update_with_taken_location():
-    # TODO
-    pass
+    # Try to update fixture 2 with fixture 1 location
+    test_part = fixture_deep_copy(fixture_part_2)
+    test_part["serial_number"] = "q1w2e3"
+    test_part["location"] = fixture_part_1["location"].copy()
+    response = client.put(
+        "/parts/q1w2e3",
+        json={"new_part_data": test_part, "new_location": test_part["location"]}
+    )
+    err_str = "another part (serial: example_serial_no) is already at location: "
+    err_str += "room='basement1' bookcase=1 shelf=1 cuvette=1 column=1 row=1"
+    assert response.json() == {"detail": err_str}
+    assert response.status_code == 400
 
 
 def test_part_update_correct():
