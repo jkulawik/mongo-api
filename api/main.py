@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import FastAPI, status, HTTPException, Query, Depends
 from pymongo import MongoClient, ReturnDocument, database
 
-from .data.models import Part, Category, Location
+from .data.models import Part, Category
 from .data import validation
 
 tags_metadata = [
@@ -66,15 +66,15 @@ def get_part_document(db: database, search_dict: dict):
 
 
 @app.post("/parts", tags=["parts"])
-def create_part(part: Part, location: Location, db: database = Depends(get_db)):
+def create_part(part: Part, db: database = Depends(get_db)):
     category_document = get_category_document(db, {"name": part.category})
     validation.validate_category_accepts_parts(category_document)
     validation.validate_part_unique_serial(db, part)
-    validation.validate_part_cuvette_not_taken(db, location)
+    validation.validate_part_cuvette_not_taken(db, part.location)
 
     # Create a part dict
     part_document = vars(part)
-    part_document["location"] = vars(location)
+    part_document["location"] = vars(part_document["location"])
 
     # Add category ID for the database representation
     part_document["category"] = category_document["_id"]
@@ -117,15 +117,15 @@ def read_parts(q: Annotated[str, Query(max_length=50)] = None, db: database = De
 
 
 @app.put("/parts/{serial_number}", tags=["parts"])
-def update_part(serial_number: str, new_part_data: Part, new_location: Location, db: database = Depends(get_db)):
+def update_part(serial_number: str, new_part_data: Part, db: database = Depends(get_db)):
     new_category_document = get_category_document(db, {"name": new_part_data.category})
     validation.validate_category_accepts_parts(new_category_document)
     if new_part_data.serial_number != serial_number:
         validation.validate_part_unique_serial(db, new_part_data)
-    validation.validate_part_cuvette_not_taken(db, new_location)
+    validation.validate_part_cuvette_not_taken(db, new_part_data.location)
 
     update_data = vars(new_part_data)
-    update_data["location"] = vars(new_location)
+    update_data["location"] = vars(update_data["location"])
     update_data["category"] = new_category_document["_id"]
 
     updated_part = db.parts.find_one_and_update(

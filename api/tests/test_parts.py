@@ -28,10 +28,7 @@ def test_part_add_to_nonexistent_category():
     test_part = fixture_deep_copy(fixture_part_1)
     test_part["category"] = "doesntexist"
     # Test trying to add nonexistent category
-    response = client.post(
-        "/parts",
-        json={"part": test_part, "location": test_part["location"]}
-    )
+    response = client.post("/parts", json=test_part)
     assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
 
@@ -40,10 +37,7 @@ def test_part_add_to_base_category():
     # Test trying to add to base category
     test_part = fixture_deep_copy(fixture_part_1)
     test_part["category"] = "base_parts"
-    response = client.post(
-        "/parts",
-        json={"part": test_part, "location": test_part["location"]}
-    )
+    response = client.post("/parts", json=test_part)
     assert response.json() == {"detail": "part can't be assigned to a base category (base_parts)"}
     assert response.status_code == 400
 
@@ -51,10 +45,7 @@ def test_part_add_to_base_category():
 def test_part_add_with_taken_location():
     test_part = fixture_deep_copy(fixture_part_1)
     test_part["serial_number"] = "taken"
-    response = client.post(
-        "/parts",
-        json={"part": test_part, "location": test_part["location"]}
-    )
+    response = client.post("/parts", json=test_part)
     err_str = "another part (serial: example_serial_no) is already at location: "
     err_str += "room='basement1' bookcase=1 shelf=1 cuvette=1 column=1 row=1"
     assert response.json() == {"detail": err_str}
@@ -66,10 +57,7 @@ def test_part_add_correct():
     test_part = fixture_deep_copy(fixture_part_1)
     test_part["location"]["row"] = 2
     test_part["serial_number"] = "qwerty"
-    response = client.post(
-        "/parts",
-        json={"part": test_part, "location": test_part["location"]}
-    )
+    response = client.post("/parts", json=test_part)
     assert response.json() == test_part
     assert response.status_code == 200
 
@@ -107,10 +95,7 @@ def test_part_update_with_nonexistent_category():
     new_part_data = fixture_deep_copy(fixture_part_1)
     new_part_data["serial_number"] = "blabla"
     new_part_data["category"] = "doesntexist"
-    response = client.put(
-        "/parts/example_serial_no",
-        json={"new_part_data": new_part_data, "new_location": new_part_data["location"]}
-    )
+    response = client.put("/parts/example_serial_no", json=new_part_data)
     assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
 
@@ -119,10 +104,7 @@ def test_part_update_with_base_category():
     new_part_data = fixture_deep_copy(fixture_part_1)
     new_part_data["serial_number"] = "blabla"
     new_part_data["category"] = "base_parts"
-    response = client.put(
-        "/parts/example_serial_no",
-        json={"new_part_data": new_part_data, "new_location": new_part_data["location"]}
-    )
+    response = client.put("/parts/example_serial_no", json=new_part_data)
     assert response.json() == {"detail": "part can't be assigned to a base category (base_parts)"}
     assert response.status_code == 400
 
@@ -132,10 +114,7 @@ def test_part_update_with_taken_location():
     test_part = fixture_deep_copy(fixture_part_2)
     test_part["serial_number"] = "q1w2e3"
     test_part["location"] = fixture_part_1["location"].copy()
-    response = client.put(
-        "/parts/q1w2e3",
-        json={"new_part_data": test_part, "new_location": test_part["location"]}
-    )
+    response = client.put("/parts/q1w2e3", json=test_part)
     err_str = "another part (serial: example_serial_no) is already at location: "
     err_str += "room='basement1' bookcase=1 shelf=1 cuvette=1 column=1 row=1"
     assert response.json() == {"detail": err_str}
@@ -146,10 +125,7 @@ def test_part_update_correct():
     new_part_data = fixture_deep_copy(fixture_part_1)
     new_part_data["location"]["row"] = 7
     new_part_data["serial_number"] = "new_serial_no"
-    response = client.put(
-        "/parts/example_serial_no",
-        json={"new_part_data": new_part_data, "new_location": new_part_data["location"]}
-    )
+    response = client.put("/parts/example_serial_no", json=new_part_data)
     assert response.json() == new_part_data
     assert response.status_code == 200
 
@@ -159,10 +135,7 @@ def test_part_update_correct():
     assert response.status_code == 200
 
     # Revert the change to not mess with other tests
-    response = client.put(
-        "/parts/new_serial_no",
-        json={"new_part_data": fixture_part_1, "new_location": fixture_part_1["location"]}
-    )
+    response = client.put("/parts/new_serial_no", json=fixture_part_1)
     assert response.json() == fixture_part_1
     assert response.status_code == 200
 
