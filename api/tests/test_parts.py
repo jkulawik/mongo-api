@@ -1,16 +1,15 @@
 from fastapi.testclient import TestClient
-import pytest
 import mongomock
 
 from ..main import app, get_db
-from .example_data import fixture_part_1, fixture_part_2, fixture_deep_copy
+from .example_data import fixture_part_1, fixture_part_2, fixture_deep_copy, add_test_data
 
 client = TestClient(app)
 
-# This segment can be put in override_db() to run each test with a fresh db,
-# but using the same instance requires less boilerplate
 test_client = mongomock.MongoClient()
 test_db = test_client["test_db"]
+add_test_data(test_db)
+
 
 def override_db():
     try:
@@ -20,32 +19,6 @@ def override_db():
 
 
 app.dependency_overrides[get_db] = override_db
-
-# TODO fixture probably shouldn't use the API
-@pytest.fixture(scope="session", autouse=True)
-def init_data_for_parts_testing():
-    # Add base category and subcategory
-    response = client.post("/categories", json={"name": "base_parts", "parent_name": ""})
-    assert response.status_code == 200
-    response = client.post("/categories", json={"name": "test_parts", "parent_name": "base_parts"})
-    assert response.status_code == 200
-    
-    # Add test parts
-    response = client.post(
-        "/parts",
-        json={"part": fixture_part_1, "location": fixture_part_1["location"]}
-    )
-    assert response.json() == fixture_part_1
-    assert response.json()["location"] == fixture_part_1["location"]
-    assert response.status_code == 200
-
-    response = client.post(
-        "/parts",
-        json={"part": fixture_part_2, "location": fixture_part_2["location"]}
-    )
-    assert response.json() == fixture_part_2
-    assert response.json()["location"] == fixture_part_2["location"]
-    assert response.status_code == 200
 
 
 # -------------------------- Add / POST -------------------------- #
