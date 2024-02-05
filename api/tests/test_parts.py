@@ -148,7 +148,7 @@ def test_part_update_correct():
     # Revert the change to not mess with other tests
     response = client.put(
         "/parts/new_serial_no",
-        json={"part": fixture_part_1, "location": fixture_part_1["location"]}
+        json={"new_part_data": fixture_part_1, "new_location": fixture_part_1["location"]}
     )
     assert response.json() == fixture_part_1
     assert response.status_code == 200
