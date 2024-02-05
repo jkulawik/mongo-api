@@ -218,18 +218,17 @@ def update_category(name: str, new_category_data: Category, db: database = Depen
         new_parent_document = get_category_document(db, {"name": new_category_data.parent_name})
         new_parent_id = new_parent_document["_id"]
 
-    # TODO rename this to updated_category
-    new_category = db.categories.find_one_and_update(
+    updated_category = db.categories.find_one_and_update(
         {"_id": category_document["_id"]},
         {"$set": {"name": new_category_data.name, "parent_id": new_parent_id}},
         return_document=ReturnDocument.AFTER
     )
 
     # Replace ObjectIDs with string names for the API and remove the unnecessary ones
-    new_category["parent_name"] = new_category_data.parent_name
-    del new_category["_id"]
-    del new_category["parent_id"]
-    return new_category
+    updated_category["parent_name"] = new_category_data.parent_name
+    del updated_category["_id"]
+    del updated_category["parent_id"]
+    return updated_category
 
 
 @app.delete("/categories/{name}", tags=["categories"])
