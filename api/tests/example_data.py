@@ -53,7 +53,6 @@ def add_test_data(db: database):
     edit_test_2 = {"_id": ObjectId(), "name": "edit_cat2", "parent_id": edit_test_1["_id"]}
     edit_test_3 = {"_id": ObjectId(), "name": "edit_cat3", "parent_id": edit_test_1["_id"]}
     delete_test = {"_id": ObjectId(), "name": "deleteme", "parent_id": edit_test_1["_id"]}
-    print(edit_test_1)
 
     db.categories.insert_many([
         base_parts,
