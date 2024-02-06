@@ -30,7 +30,7 @@ def test_part_add_to_nonexistent_category():
     test_part["category"] = "doesntexist"
     # Test trying to add nonexistent category
     response = client.post("/parts", json=test_part)
-    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
+    assert response.json() == {"detail": "category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
 
 
@@ -137,7 +137,7 @@ def test_part_update_with_nonexistent_category():
     new_part_data["serial_number"] = "blabla"
     new_part_data["category"] = "doesntexist"
     response = client.put("/parts/example_serial_no", json=new_part_data)
-    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
+    assert response.json() == {"detail": "category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
 
 

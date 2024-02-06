@@ -41,7 +41,7 @@ def get_category_document(db: database, search_dict: dict):
     if result is None:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,
-            f"part category {search_dict} does not exist"
+            f"category {search_dict} does not exist"
         )
     return result
 

@@ -105,7 +105,7 @@ def test_category_read_many():
 def test_category_update_nonexistent():
     new_category_data = {"name": "new_name", "parent_name": "edit_cat1"}
     response = client.put("/categories/doesntexist", json=new_category_data)
-    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
+    assert response.json() == {"detail": "category {'name': 'doesntexist'} does not exist"}
     assert response.status_code == 404
 
 
@@ -158,7 +158,7 @@ def test_category_update_doublecheck():
 def test_category_delete_nonexistent():
     response = client.delete("/categories/doesntexist")
     assert response.status_code == 404
-    assert response.json() == {"detail": "part category {'name': 'doesntexist'} does not exist"}
+    assert response.json() == {"detail": "category {'name': 'doesntexist'} does not exist"}
 
 
 def test_category_delete_with_parts_assigned():
