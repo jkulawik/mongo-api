@@ -32,10 +32,7 @@ Run the app with:
 uvicorn api.main:app
 ```
 
-In the console output, note the API URI (default: `http://127.0.0.1:8000`).
-Swagger docs of the API are available at `http://127.0.0.1:8000/docs`.
-All endpoints and methods are listed there,
-but a simplified API documentation is available in this markdown file.
+In the console output, note the API URI (default: `http://127.0.0.1:8000`). Swagger docs of the API are available at `http://127.0.0.1:8000/docs`. A short API documentation is also available in this markdown file.
 
 To populate the database with example data, POST to `/repopulate` (e.g. using the Swagger docs).
 
@@ -57,7 +54,7 @@ Press `Ctrl+C` in the terminal window to stop the container.
 
 The API should be available at the IP address of your Docker interface
 (check `ip a` on Linux or `ipconfig` on Windows).
-Ideally, try the `/docs` endpoint in your browser.
+`0.0.0.0` can work too.
 
 # Project specification
 
@@ -105,4 +102,53 @@ this field is removed and `parent_id` is inserted instead when an ObjectID is ne
 
 # API documentation
 
-TODO
+A more detailed Swagger documentation of the API is available at `/docs` when running the app.
+
+Endpoints:
+- `/repopulate`
+  - `POST`: Removes all existing data and creates several categories and parts for testing.
+- `/parts`
+  - Optional query: `?q=example`
+  - `POST`: create part from JSON body. Returns the created part.
+  - `GET`: get parts that partially match the query in any of their text fields or if there's a match in the part's category name. Returns all parts if no query is supplied.
+- `/parts/{serial_number}`
+  - `PUT`: update part with `serial_number` with data from JSON body. Returns the updated part.
+  - `DELETE`: delete part with `serial_number`. Returns an empty JSON.
+- `/categories`
+  - `POST`: create category from JSON from the request body. Returns the created category.
+  - `GET`: get all categories.
+- `/categories/{name}`
+  - `PUT`: update category with `name` with data from JSON body. Returns the updated category.
+  - `DELETE`: delete category with `name`.
+
+## Example inputs
+
+The JSON expected in request body when creating or updating data.
+
+Category:
+```
+{
+  "name": "name",
+  "parent_name": "parent_name"
+}
+```
+
+Part:
+```
+{
+  "serial_number": "1234",
+  "name": "part_name",
+  "description": "Part description",
+  "category": "category",
+  "quantity": 10,
+  "price": 2,
+  "location": {
+    "room": "room",
+    "bookcase": 1,
+    "shelf": 1,
+    "cuvette": 1,
+    "column": 1,
+    "row": 1
+  }
+}
+```
