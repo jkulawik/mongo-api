@@ -6,6 +6,7 @@ DEFAULT_MAX_LEN = 20
 class Category(BaseModel):
     name: str = Field(min_length=1, max_length=DEFAULT_MAX_LEN, default="name")
     # NOTE: on the db side, {"parent_id": ObjectID} is used to point to the appropriate category
+    # and parent_name is removed
     parent_name: str = Field(max_length=DEFAULT_MAX_LEN, default="parent_name")
 
 

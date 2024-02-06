@@ -1,11 +1,10 @@
 from typing import Annotated
-from fastapi import FastAPI, status, HTTPException, Depends
+from fastapi import FastAPI, status, HTTPException, Depends, Query
 from pymongo import MongoClient, ReturnDocument, database
 
 from .data.models import Part, Category
 from .data import validation
 from .tests.example_data import add_test_data
-from .search import search_params, search_parts
 
 tags_metadata = [
     {"name": "parts"},
@@ -95,16 +94,28 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
 
 
 @app.get("/parts", tags=["parts"])
-def read_parts(params: Annotated[dict | None, Depends(search_params)] = None, db: database = Depends(get_db)):
+def read_parts(q: Annotated[str | None, Query(max_length=50)] = None, db: database = Depends(get_db)):
     """
     Searches parts using their text fields.
     Fetches all parts if no search query is supplied.
     """
     results = []
-    if params is None:
+    if q is None:
         results = list(db.parts.find({}))
     else:
-        results = list(search_parts(db, params))
+        matching_category_ids = []
+        for doc in db.categories.find({"name": {"$regex": q}}, {"_id": 1}):
+            matching_category_ids.append(doc["_id"])
+        search_filter = {
+            "$or": [
+                {"serial_number":{"$regex": q}},
+                {"name":{"$regex": q}},
+                {"description":{"$regex": q}},
+                {"location.room":{"$regex": q}},
+                {"category": {"$in": matching_category_ids}},
+            ]
+        }
+        results = list(db.parts.find(search_filter))
 
     if len(results) == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "no parts match the query")

@@ -86,7 +86,7 @@ def test_part_read_many():
 
 def test_part_search_by_serial():
     # Search a serial
-    response = client.get("/parts?t=q1w2e3")
+    response = client.get("/parts?q=q1w2e3")
     assert response.status_code == 200
     assert fixture_part_1 not in response.json()
     assert fixture_part_2 in response.json()
@@ -95,7 +95,7 @@ def test_part_search_by_serial():
 
 def test_part_search_by_multiple():
     # Search in serial and name at the same time
-    response = client.get("/parts?t=brr")
+    response = client.get("/parts?q=brr")
     assert response.status_code == 200
     assert fixture_part_1 not in response.json()
     assert fixture_part_2 in response.json()
@@ -104,7 +104,7 @@ def test_part_search_by_multiple():
 
 def test_part_search_by_room():
     # Search a location
-    response = client.get("/parts?t=room")
+    response = client.get("/parts?q=room")
     assert response.status_code == 200
     assert fixture_part_1 not in response.json()
     assert fixture_part_2 not in response.json()
@@ -113,7 +113,7 @@ def test_part_search_by_room():
 
 def test_part_search_by_description():
     # Search a description
-    response = client.get("/parts?t=legs")
+    response = client.get("/parts?q=legs")
     assert response.status_code == 200
     assert fixture_part_1 in response.json()
     assert fixture_part_2 not in response.json()
@@ -122,7 +122,7 @@ def test_part_search_by_description():
 
 def test_part_search_by_category():
     # Search a category name
-    response = client.get("/parts?t=parts")
+    response = client.get("/parts?q=parts")
     assert response.status_code == 200
     assert fixture_part_1 in response.json()
     assert fixture_part_2 in response.json()
