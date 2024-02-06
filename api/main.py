@@ -97,16 +97,15 @@ def read_part(serial_number: str, db: database = Depends(get_db)):
 @app.get("/parts", tags=["parts"])
 def read_parts(params: Annotated[dict | None, Depends(search_params)] = None, db: database = Depends(get_db)):
     """
-    Searches parts using the JSON from the body.
-    Fetches all parts if no search JSON is supplied.
+    Searches parts using their text fields.
+    Fetches all parts if no search query is supplied.
     """
     results = []
     if params is None:
         results = list(db.parts.find({}))
     else:
-        matches = search_parts(db, params)
-        results = list(matches)
-    
+        results = list(search_parts(db, params))
+
     if len(results) == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "no parts match the query")
 
